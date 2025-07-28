@@ -313,10 +313,15 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   };
 
   const placeOrder = async (customerData: CustomerInfo, validationRules: (data: CustomerInfo) => ValidationErrors) => {
+    console.log('🔍 placeOrder called with customerData:', customerData);
+    console.log('🔍 Cart items:', cart);
+    console.log('🔍 Total amount:', total);
+    
     const errors = validationRules(customerData);
     if (Object.keys(errors).length > 0) {
       // In a real app, you'd set an error state here for the form to display
       console.error("Validation failed", errors);
+      alert('Please fix the validation errors before placing the order.');
       return false;
     }
 
@@ -395,7 +400,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       return true;
     } catch (error) {
       console.error('Error creating order:', error);
-      alert('Failed to place order. Please try again.');
+      console.error('Error details:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to place order: ${errorMessage}. Please try again.`);
       return false;
     }
   };
@@ -856,7 +863,7 @@ const CheckoutPage = () => {
 // --- src/components/pages/AccountPage.tsx ---
 
 const AccountPage = () => {
-  const { total, setCurrentPage, placeOrder, customerInfo, serviceablePincodes } = useAppContext();
+  const { total, setCurrentPage, placeOrder, customerInfo, serviceablePincodes, cart } = useAppContext();
 
   const validationRules = (values: CustomerInfo): ValidationErrors => {
     const errors: ValidationErrors = {};
@@ -872,8 +879,21 @@ const AccountPage = () => {
   const { values, errors, handleChange, validate } = useFormValidation(customerInfo, validationRules);
 
   const handlePlaceOrder = async () => {
+    console.log('🔍 handlePlaceOrder called');
+    console.log('🔍 Form values:', values);
+    console.log('🔍 Cart items:', cart);
+    console.log('🔍 Total amount:', total);
+    
     if (validate()) {
-      await placeOrder(values, validationRules);
+      console.log('🔍 Validation passed, calling placeOrder');
+      try {
+        const result = await placeOrder(values, validationRules);
+        console.log('🔍 placeOrder result:', result);
+      } catch (error) {
+        console.error('🔍 Error in handlePlaceOrder:', error);
+      }
+    } else {
+      console.log('🔍 Validation failed');
     }
   };
 
