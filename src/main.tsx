@@ -7,6 +7,7 @@ import TestEmail from './test-email.tsx'
 import TestProductUpdates from './test-product-updates.tsx'
 import GoogleOAuthSetupGuide from './components/GoogleOAuthSetupGuide.tsx'
 import OAuthTroubleshooter from './components/OAuthTroubleshooter.tsx'
+import OAuthProductionChecker from './components/OAuthProductionChecker.tsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -19,6 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/test-product-updates" element={<TestProductUpdates />} />
           <Route path="/setup-guide" element={<GoogleOAuthSetupGuide />} />
           <Route path="/troubleshooter" element={<OAuthTroubleshooter />} />
+          <Route path="/oauth-checker" element={<OAuthProductionChecker />} />
         </Routes>
     </Router>
   </React.StrictMode>,
