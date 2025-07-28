@@ -1,5 +1,29 @@
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import { Home, ShoppingCart, Plus, Minus, Search, Instagram, Phone, Clock, MapPin, X, Check, Truck, ArrowRight, ArrowLeft, Settings, Trash2 } from 'lucide-react';
+import { 
+  Home,
+  ShoppingCart, 
+  Package, 
+  Clock, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Heart, 
+  Star, 
+  Plus, 
+  Minus, 
+  Trash2, 
+  CheckCircle, 
+  AlertCircle, 
+  Loader2,
+  Calendar,
+  Info,
+  Truck,
+  Settings,
+  X,
+  ArrowLeft,
+  ArrowRight,
+  Check
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminDashboard from './AdminDashboard';
 import TestSupabase from './test-supabase';

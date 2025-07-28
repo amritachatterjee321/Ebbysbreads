@@ -1,29 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Package, 
-  ShoppingCart, 
-  Settings, 
   Plus, 
   Edit, 
   Trash2, 
+  Save, 
+  X, 
   Eye, 
   EyeOff,
-  GripVertical,
-  Save,
-  AlertCircle,
-  Loader2,
+  Package,
+  DollarSign,
+  Scale,
+  ImageIcon,
+  FileText,
+  Box,
+  Star,
+  Sparkles,
   CheckCircle,
-  Upload,
+  AlertCircle,
+  SortAsc,
+  SortDesc,
+  GripVertical,
+  Loader2,
+  ShoppingCart,
+  Settings,
   Home
 } from 'lucide-react';
+import { supabase } from './lib/supabase';
 import { 
   DndContext, 
-  closestCenter, 
-  KeyboardSensor, 
-  PointerSensor, 
-  useSensors,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
   useSensor,
+  useSensors,
   DragEndEvent
 } from '@dnd-kit/core';
 import {
@@ -37,7 +47,6 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { productService, orderService, homepageSettingsService, fileService } from './services/database';
-import { supabase } from './lib/supabase';
 import type { Database } from './lib/supabase';
 
 type Product = Database['public']['Tables']['products']['Row'];
@@ -59,11 +68,11 @@ interface ProductFormData {
 
 interface HomepageSettingsFormData {
   brand_name: string;
-  hero_image_url: string;
+  hero_image_url: string | null;
   tagline: string;
   order_deadline_text: string;
   delivery_info_text: string;
-  menu_title: string;
+  menu_title: string | null;
   serviceable_pincodes: string;
 }
 

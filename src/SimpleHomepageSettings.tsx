@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { homepageSettingsService } from './services/database';
-import { Home, Edit, Save, Loader2, CheckCircle } from 'lucide-react';
+import { Home, Edit, Save, Loader2 } from 'lucide-react';
 import type { Database } from './lib/supabase';
 
 type HomepageSettings = Database['public']['Tables']['homepage_settings']['Row'];

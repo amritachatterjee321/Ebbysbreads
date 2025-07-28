@@ -1,127 +1,196 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { homepageSettingsService } from './services/database';
+import { Loader2, Save, CheckCircle, AlertCircle } from 'lucide-react';
+
+interface HomepageSettings {
+  id: number;
+  brand_name: string;
+  hero_image_url: string | null;
+  tagline: string;
+  order_deadline_text: string;
+  delivery_info_text: string;
+  menu_title: string | null;
+  serviceable_pincodes: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const TestHomepageSettings = () => {
-  const [settings, setSettings] = useState(null);
+  const [settings, setSettings] = useState<HomepageSettings | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>('success');
 
-  const testConnection = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchSettings = async () => {
     try {
-      console.log('Testing database connection...');
+      setLoading(true);
       const data = await homepageSettingsService.get();
-      console.log('Database response:', data);
       setSettings(data);
-      
-      if (data) {
-        alert(`✅ Database connected successfully!\n\nFound settings for: ${data.brand_name}\nMenu title: ${data.menu_title}\nTagline: ${data.tagline}`);
-      } else {
-        alert('⚠️ Database connected but no settings found');
-      }
+      setMessage('Settings fetched successfully');
+      setMessageType('success');
     } catch (err) {
-      console.error('Database connection error:', err);
-      setError(err.message);
-      alert(`❌ Database connection failed: ${err.message}`);
+      console.error('Error fetching settings:', err);
+      setMessage(err instanceof Error ? err.message : 'Unknown error occurred');
+      setMessageType('error');
     } finally {
       setLoading(false);
     }
   };
 
-  const checkTableExists = async () => {
+  const saveSettings = async () => {
+    if (!settings) return;
+    
     try {
-      const exists = await homepageSettingsService.checkTableExists();
-      alert(`Table exists: ${exists}`);
+      setSaving(true);
+      await homepageSettingsService.update(settings.id, {
+        brand_name: settings.brand_name,
+        hero_image_url: settings.hero_image_url,
+        tagline: settings.tagline,
+        order_deadline_text: settings.order_deadline_text,
+        delivery_info_text: settings.delivery_info_text,
+        menu_title: settings.menu_title,
+        serviceable_pincodes: settings.serviceable_pincodes
+      });
+      setMessage('Settings saved successfully');
+      setMessageType('success');
     } catch (err) {
-      alert(`Error checking table: ${err.message}`);
+      console.error('Error saving settings:', err);
+      setMessage(err instanceof Error ? err.message : 'Unknown error occurred');
+      setMessageType('error');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Database Connection Test</h1>
-        
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Test Database Connection</h2>
-          
-          <div className="space-y-4">
-            <button
-              onClick={testConnection}
-              disabled={loading}
-              className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? 'Testing...' : 'Test Database Connection'}
-            </button>
-            
-            <button
-              onClick={checkTableExists}
-              className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700"
-            >
-              Check if Table Exists
-            </button>
-          </div>
-          
-          {error && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-800 font-medium">Error:</p>
-              <p className="text-red-700">{error}</p>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Test Homepage Settings</h1>
+      
+      <div className="space-y-4">
+        <button
+          onClick={fetchSettings}
+          disabled={loading}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Fetch Settings'}
+        </button>
+
+        {message && (
+          <div className={`p-4 rounded-md ${
+            messageType === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+          }`}>
+            <div className="flex items-center">
+              {messageType === 'success' ? (
+                <CheckCircle className="h-5 w-5 mr-2" />
+              ) : (
+                <AlertCircle className="h-5 w-5 mr-2" />
+              )}
+              {message}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {settings && (
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Current Settings</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white border rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Current Settings</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="font-medium text-gray-900 mb-2">Basic Info</h3>
-                <div className="space-y-2">
-                  <div>
-                    <span className="text-sm text-gray-500">Brand Name:</span>
-                    <p className="font-medium">{settings.brand_name}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-gray-500">Menu Title:</span>
-                    <p className="font-medium">{settings.menu_title}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-gray-500">Tagline:</span>
-                    <p className="text-sm">{settings.tagline}</p>
-                  </div>
-                </div>
+                <label className="block text-sm font-medium text-gray-700">Brand Name</label>
+                <input
+                  type="text"
+                  value={settings.brand_name}
+                  onChange={(e) => setSettings({ ...settings, brand_name: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
               </div>
               
               <div>
-                <h3 className="font-medium text-gray-900 mb-2">Delivery Info</h3>
-                <div className="space-y-2">
-                  <div>
-                    <span className="text-sm text-gray-500">Order Deadline:</span>
-                    <p className="text-sm">{settings.order_deadline_text}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-gray-500">Delivery Info:</span>
-                    <p className="text-sm">{settings.delivery_info_text}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-gray-500">Serviceable Pincodes:</span>
-                    <p className="text-sm">{settings.serviceable_pincodes}</p>
-                  </div>
-                </div>
+                <label className="block text-sm font-medium text-gray-700">Menu Title</label>
+                <input
+                  type="text"
+                  value={settings.menu_title || ''}
+                  onChange={(e) => setSettings({ ...settings, menu_title: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Tagline</label>
+                <input
+                  type="text"
+                  value={settings.tagline}
+                  onChange={(e) => setSettings({ ...settings, tagline: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Order Deadline Text</label>
+                <input
+                  type="text"
+                  value={settings.order_deadline_text}
+                  onChange={(e) => setSettings({ ...settings, order_deadline_text: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Delivery Info Text</label>
+                <input
+                  type="text"
+                  value={settings.delivery_info_text}
+                  onChange={(e) => setSettings({ ...settings, delivery_info_text: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Serviceable Pincodes</label>
+                <input
+                  type="text"
+                  value={settings.serviceable_pincodes}
+                  onChange={(e) => setSettings({ ...settings, serviceable_pincodes: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Hero Image URL</label>
+                <input
+                  type="text"
+                  value={settings.hero_image_url || ''}
+                  onChange={(e) => setSettings({ ...settings, hero_image_url: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                {settings.hero_image_url && (
+                  <img
+                    src={settings.hero_image_url}
+                    alt="Hero"
+                    className="mt-2 max-w-xs h-auto rounded"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                )}
               </div>
             </div>
             
-            {settings.hero_image_url && (
-              <div className="mt-6">
-                <h3 className="font-medium text-gray-900 mb-2">Hero Image</h3>
-                <img 
-                  src={settings.hero_image_url} 
-                  alt="Hero" 
-                  className="w-full max-w-md h-48 object-cover rounded-lg"
-                />
-              </div>
-            )}
+            <div className="mt-6">
+              <button
+                onClick={saveSettings}
+                disabled={saving}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center"
+              >
+                {saving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Save Settings
+              </button>
+            </div>
           </div>
         )}
       </div>

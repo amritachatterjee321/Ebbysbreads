@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { PincodeInput } from './components/PincodeInput';
 import { PincodeValidationResult } from './services/pincode';
 import { pincodeService } from './services/pincode';
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 const TestPincode = () => {
   const [pincode, setPincode] = useState('');

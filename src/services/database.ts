@@ -178,7 +178,7 @@ export const productService = {
 
   async checkSortOrderColumn(): Promise<boolean> {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('products')
         .select('sort_order')
         .limit(1);
@@ -395,7 +395,7 @@ export const analyticsService = {
 export const homepageSettingsService = {
   async checkTableExists(): Promise<boolean> {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('homepage_settings')
         .select('id')
         .limit(1);

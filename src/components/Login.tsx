@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { authService } from '../services/auth';
-import { Loader2, Shield, LogIn, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, Shield, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface LoginProps {
   onLoginSuccess: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+const Login: React.FC<LoginProps> = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [configStatus, setConfigStatus] = useState<{ configured: boolean; missing: string[] } | null>(null);
