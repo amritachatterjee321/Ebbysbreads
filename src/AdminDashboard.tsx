@@ -14,7 +14,15 @@ import {
   Loader2,
   ShoppingCart,
   Settings,
-  Home
+  Home,
+  Users,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  Clock,
+  Search,
+  Filter
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -35,12 +43,13 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { productService, orderService, homepageSettingsService, fileService } from './services/database';
+import { productService, orderService, homepageSettingsService, fileService, customerService } from './services/database';
 import type { Database } from './lib/supabase';
 
 type Product = Database['public']['Tables']['products']['Row'];
 type Order = Database['public']['Tables']['orders']['Row'];
 type HomepageSettings = Database['public']['Tables']['homepage_settings']['Row'];
+type Customer = Database['public']['Tables']['customers']['Row'];
 
 interface ProductFormData {
   name: string;
@@ -70,6 +79,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [homepageSettings, setHomepageSettings] = useState<HomepageSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -100,6 +110,9 @@ const AdminDashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
   const [reorderLoading, setReorderLoading] = useState(false);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
 
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -153,12 +166,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchCustomers = async () => {
+    try {
+      const data = await customerService.getAll();
+      setCustomers(data);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  };
+
   const fetchData = async () => {
     try {
     setLoading(true);
       await Promise.all([
         fetchProducts(),
         fetchOrders(),
+        fetchCustomers(),
         fetchHomepageSettings()
       ]);
     } catch (error) {
@@ -534,6 +557,27 @@ const AdminDashboard = () => {
     fetchProducts(); // Reset to original order
   };
 
+  const fetchCustomerOrders = async (customerPhone: string) => {
+    try {
+      const customerOrders = orders.filter(order => order.customer_phone === customerPhone);
+      setCustomerOrders(customerOrders);
+    } catch (error) {
+      console.error('Error fetching customer orders:', error);
+    }
+  };
+
+  const selectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    fetchCustomerOrders(customer.phone);
+  };
+
+  const filteredCustomers = customers.filter(customer =>
+    customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+    customer.phone.includes(customerSearchTerm) ||
+    customer.email?.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+    customer.address.toLowerCase().includes(customerSearchTerm.toLowerCase())
+  );
+
   const SortableProduct = ({ product }: { product: Product }) => {
     const {
       attributes,
@@ -676,6 +720,17 @@ const AdminDashboard = () => {
                 <Settings className="h-5 w-5 inline mr-2" />
                 Homepage Settings
               </button>
+              <button
+                onClick={() => setActiveTab('customers')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'customers'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Users className="h-5 w-5 inline mr-2" />
+                Customer Accounts
+              </button>
             </nav>
             </div>
 
@@ -684,6 +739,7 @@ const AdminDashboard = () => {
             {activeTab === 'products' && <ProductsTab />}
             {activeTab === 'orders' && <OrdersTab />}
             {activeTab === 'homepage' && <HomepageSettingsTab />}
+            {activeTab === 'customers' && <CustomerAccountsTab />}
           </div>
         </div>
       </div>
@@ -1288,6 +1344,219 @@ const AdminDashboard = () => {
       )}
     </div>
   );
+  }
+
+  function CustomerAccountsTab() {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900">Customer Accounts</h2>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search customers..."
+                value={customerSearchTerm}
+                onChange={(e) => setCustomerSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Customer List */}
+          <div className="lg:col-span-1">
+            <div className="bg-white border rounded-lg shadow-sm">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">Customers ({filteredCustomers.length})</h3>
+              </div>
+              <div className="max-h-96 overflow-y-auto">
+                {filteredCustomers.length > 0 ? (
+                  <div className="divide-y divide-gray-200">
+                    {filteredCustomers.map((customer) => (
+                      <div
+                        key={customer.id}
+                        onClick={() => selectCustomer(customer)}
+                        className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                          selectedCustomer?.id === customer.id ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{customer.name}</h4>
+                            <p className="text-sm text-gray-500">{customer.phone}</p>
+                            {customer.email && (
+                              <p className="text-sm text-gray-400">{customer.email}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Active
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    {customerSearchTerm ? 'No customers found matching your search.' : 'No customers found.'}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Details and Orders */}
+          <div className="lg:col-span-2">
+            {selectedCustomer ? (
+              <div className="space-y-6">
+                {/* Customer Details */}
+                <div className="bg-white border rounded-lg shadow-sm">
+                  <div className="p-4 border-b border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-900">Customer Details</h3>
+                  </div>
+                  <div className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Name</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedCustomer.name}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Phone</label>
+                        <p className="mt-1 text-sm text-gray-900 flex items-center">
+                          <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                          {selectedCustomer.phone}
+                        </p>
+                      </div>
+                      {selectedCustomer.email && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Email</label>
+                          <p className="mt-1 text-sm text-gray-900 flex items-center">
+                            <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                            {selectedCustomer.email}
+                          </p>
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Address</label>
+                        <p className="mt-1 text-sm text-gray-900 flex items-start">
+                          <MapPin className="h-4 w-4 mr-2 mt-0.5 text-gray-400 flex-shrink-0" />
+                          <span>{selectedCustomer.address}, {selectedCustomer.pincode}</span>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Member Since</label>
+                        <p className="mt-1 text-sm text-gray-900 flex items-center">
+                          <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                          {new Date(selectedCustomer.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Total Orders</label>
+                        <p className="mt-1 text-sm text-gray-900">{customerOrders.length}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order History */}
+                <div className="bg-white border rounded-lg shadow-sm">
+                  <div className="p-4 border-b border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-900">Order History</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    {customerOrders.length > 0 ? (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Order #
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Date
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Items
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Total
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Status
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {customerOrders.map((order) => (
+                            <tr key={order.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {order.order_number}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {new Date(order.order_date).toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500">
+                                <div className="max-w-xs">
+                                  {Array.isArray(order.items) ? order.items.map((item: any, index: number) => (
+                                    <div key={index} className="text-xs">
+                                      {item.quantity}x {item.name}
+                                    </div>
+                                  )) : 'N/A'}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ₹{order.total}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                                  {getStatusDisplayName(order.status)}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <select
+                                  value={order.status}
+                                  onChange={(e) => updateOrderStatus(order.id, e.target.value as Order['status'])}
+                                  className="text-xs border border-gray-300 rounded px-2 py-1"
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="confirmed">Confirmed</option>
+                                  <option value="preparing">Preparing</option>
+                                  <option value="out_for_delivery">Ready</option>
+                                  <option value="delivered">Delivered</option>
+                                  <option value="cancelled">Cancelled</option>
+                                </select>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="p-4 text-center text-gray-500">
+                        No orders found for this customer.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white border rounded-lg shadow-sm">
+                <div className="p-12 text-center">
+                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Customer</h3>
+                  <p className="text-gray-500">Choose a customer from the list to view their details and order history.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Hero Image Upload Modal
