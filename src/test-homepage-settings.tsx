@@ -1,19 +1,9 @@
 import { useState } from 'react';
 import { homepageSettingsService } from './services/database';
 import { Loader2, Save, CheckCircle, AlertCircle } from 'lucide-react';
+import type { Database } from './lib/supabase';
 
-interface HomepageSettings {
-  id: number;
-  brand_name: string;
-  hero_image_url: string | null;
-  tagline: string;
-  order_deadline_text: string;
-  delivery_info_text: string;
-  menu_title: string | null;
-  serviceable_pincodes: string;
-  created_at: string;
-  updated_at: string;
-}
+type HomepageSettings = Database['public']['Tables']['homepage_settings']['Row'];
 
 const TestHomepageSettings = () => {
   const [settings, setSettings] = useState<HomepageSettings | null>(null);
@@ -29,7 +19,7 @@ const TestHomepageSettings = () => {
       setSettings(data);
       setMessage('Settings fetched successfully');
       setMessageType('success');
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error fetching settings:', err);
       setMessage(err instanceof Error ? err.message : 'Unknown error occurred');
       setMessageType('error');
@@ -49,12 +39,12 @@ const TestHomepageSettings = () => {
         tagline: settings.tagline,
         order_deadline_text: settings.order_deadline_text,
         delivery_info_text: settings.delivery_info_text,
-        menu_title: settings.menu_title,
+        menu_title: settings.menu_title ?? undefined,
         serviceable_pincodes: settings.serviceable_pincodes
       });
       setMessage('Settings saved successfully');
       setMessageType('success');
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error saving settings:', err);
       setMessage(err instanceof Error ? err.message : 'Unknown error occurred');
       setMessageType('error');

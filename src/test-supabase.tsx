@@ -11,7 +11,7 @@ const TestSupabase = () => {
       setStatus('Testing connection...');
       setError(null);
       
-      const { data, error } = await supabase.from('products').select('count').limit(1);
+      const { error } = await supabase.from('products').select('count').limit(1);
       
       if (error) {
         throw error;

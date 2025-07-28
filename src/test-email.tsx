@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { emailService } from './services/email';
-import { Loader2, Send, CheckCircle, AlertCircle } from 'lucide-react';
 
 const TestEmail = () => {
   const [loading, setLoading] = useState(false);

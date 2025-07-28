@@ -2,22 +2,13 @@ import React, { useState, useEffect, createContext, useContext, useCallback } fr
 import { 
   Home,
   ShoppingCart, 
-  Package, 
   Clock, 
   MapPin, 
   Phone, 
   Mail, 
-  Heart, 
-  Star, 
   Plus, 
   Minus, 
   Trash2, 
-  CheckCircle, 
-  AlertCircle, 
-  Loader2,
-  Calendar,
-  Info,
-  Truck,
   Settings,
   X,
   ArrowLeft,
@@ -510,7 +501,7 @@ const useFormValidation = (initialState: CustomerInfo, validationRules: (values:
 // --- src/components/pages/Homepage.tsx ---
 
 const Homepage = () => {
-  const { products, serviceablePincodes, homepageSettings, lastRefreshTime, addToCart, cartItemCount, subtotal, deliveryCharges, total, setCurrentPage, updateCartQuantity, removeFromCart, refreshProducts } = useAppContext();
+  const { products, homepageSettings, cartItemCount, subtotal, total, setCurrentPage, updateCartQuantity, removeFromCart } = useAppContext();
   
   // Debug logging for products
   useEffect(() => {
@@ -534,7 +525,6 @@ const Homepage = () => {
     if (!product) return;
     
     const currentCartItem = cart.find(item => item.id === productId);
-    const currentQuantity = currentCartItem?.quantity || 0;
     
     if (newQuantity <= 0) {
       // Remove from cart if quantity is 0 or less
@@ -879,7 +869,7 @@ const AccountPage = () => {
     return errors;
   };
 
-  const { values, setValues, errors, handleChange, validate } = useFormValidation(customerInfo, validationRules);
+  const { values, errors, handleChange, validate } = useFormValidation(customerInfo, validationRules);
 
   const handlePlaceOrder = async () => {
     if (validate()) {

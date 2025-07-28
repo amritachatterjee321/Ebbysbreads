@@ -5,21 +5,11 @@ import {
   Edit, 
   Trash2, 
   Save, 
-  X, 
   Eye, 
   EyeOff,
   Package,
-  DollarSign,
-  Scale,
-  ImageIcon,
-  FileText,
-  Box,
-  Star,
-  Sparkles,
   CheckCircle,
   AlertCircle,
-  SortAsc,
-  SortDesc,
   GripVertical,
   Loader2,
   ShoppingCart,
@@ -110,7 +100,7 @@ const AdminDashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
   const [reorderLoading, setReorderLoading] = useState(false);
-  const [sortOrderColumnExists, setSortOrderColumnExists] = useState(true);
+
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
