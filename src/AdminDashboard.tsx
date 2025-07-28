@@ -26,7 +26,6 @@ import {
   Settings,
   Home
 } from 'lucide-react';
-import { supabase } from './lib/supabase';
 import { 
   DndContext, 
   closestCenter,
@@ -68,11 +67,11 @@ interface ProductFormData {
 
 interface HomepageSettingsFormData {
   brand_name: string;
-  hero_image_url: string | null;
+  hero_image_url: string;
   tagline: string;
   order_deadline_text: string;
   delivery_info_text: string;
-  menu_title: string | null;
+  menu_title: string;
   serviceable_pincodes: string;
 }
 
@@ -796,7 +795,7 @@ const AdminDashboard = () => {
                   >
                     {imagePreview ? (
                       <div className="relative">
-                        <img src={imagePreview} alt="Preview" className="max-w-full h-auto" />
+                        <img src={(imagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
                     <button
                           type="button"
                           onClick={removeImage}
@@ -859,7 +858,7 @@ const AdminDashboard = () => {
                   <label className="block text-sm font-medium text-gray-700">Brand Name</label>
                   <input
                     type="text"
-                    value={homepageSettingsFormData.brand_name}
+                    value={homepageSettingsFormData.brand_name ?? ''}
                     onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, brand_name: e.target.value }))}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
@@ -868,7 +867,7 @@ const AdminDashboard = () => {
                   <div>
                   <label className="block text-sm font-medium text-gray-700">Tagline</label>
                   <textarea
-                    value={homepageSettingsFormData.tagline}
+                    value={homepageSettingsFormData.tagline ?? ''}
                     onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, tagline: e.target.value }))}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     rows={3}
@@ -879,7 +878,7 @@ const AdminDashboard = () => {
                   <label className="block text-sm font-medium text-gray-700">Order Deadline Text</label>
                   <input
                     type="text"
-                    value={homepageSettingsFormData.order_deadline_text}
+                    value={homepageSettingsFormData.order_deadline_text ?? ''}
                     onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, order_deadline_text: e.target.value }))}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
@@ -889,7 +888,7 @@ const AdminDashboard = () => {
                   <label className="block text-sm font-medium text-gray-700">Delivery Info Text</label>
                   <input
                     type="text"
-                    value={homepageSettingsFormData.delivery_info_text}
+                    value={homepageSettingsFormData.delivery_info_text ?? ''}
                     onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, delivery_info_text: e.target.value }))}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
@@ -899,7 +898,7 @@ const AdminDashboard = () => {
                   <label className="block text-sm font-medium text-gray-700">Menu Section Title</label>
                   <input
                     type="text"
-                    value={homepageSettingsFormData.menu_title}
+                    value={homepageSettingsFormData.menu_title ?? ''}
                     onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, menu_title: e.target.value }))}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
@@ -908,7 +907,7 @@ const AdminDashboard = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Serviceable Pincodes</label>
                   <textarea
-                    value={homepageSettingsFormData.serviceable_pincodes}
+                    value={homepageSettingsFormData.serviceable_pincodes ?? ''}
                     onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, serviceable_pincodes: e.target.value }))}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     rows={3}
@@ -926,7 +925,7 @@ const AdminDashboard = () => {
                   >
                     {heroImagePreview ? (
                       <div className="relative">
-                        <img src={heroImagePreview} alt="Preview" className="max-w-full h-auto" />
+                        <img src={(heroImagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
                   <button
                           type="button"
                           onClick={removeHeroImage}
@@ -1331,7 +1330,7 @@ const AdminDashboard = () => {
                 >
                   {heroImagePreview ? (
                     <div className="relative">
-                      <img src={heroImagePreview} alt="Preview" className="max-w-full h-auto" />
+                      <img src={(heroImagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
               <button
                         type="button"
                         onClick={removeHeroImage}
@@ -1558,7 +1557,7 @@ const AdminDashboard = () => {
                 >
                   {imagePreview ? (
                     <div className="relative">
-                      <img src={imagePreview} alt="Preview" className="max-w-full h-auto" />
+                      <img src={(imagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
                       <button
                         type="button"
                         onClick={removeImage}
@@ -1621,7 +1620,7 @@ const AdminDashboard = () => {
                   <label className="block text-sm font-medium text-gray-700">Brand Name</label>
                 <input
                   type="text"
-                  value={homepageSettingsFormData.brand_name}
+                  value={homepageSettingsFormData.brand_name ?? ''}
                   onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, brand_name: e.target.value }))}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                   required
@@ -1630,7 +1629,7 @@ const AdminDashboard = () => {
               <div>
                   <label className="block text-sm font-medium text-gray-700">Tagline</label>
                 <textarea
-                  value={homepageSettingsFormData.tagline}
+                  value={homepageSettingsFormData.tagline ?? ''}
                   onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, tagline: e.target.value }))}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                   rows={3}
@@ -1641,7 +1640,7 @@ const AdminDashboard = () => {
                   <label className="block text-sm font-medium text-gray-700">Order Deadline Text</label>
                 <input
                   type="text"
-                  value={homepageSettingsFormData.order_deadline_text}
+                  value={homepageSettingsFormData.order_deadline_text ?? ''}
                   onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, order_deadline_text: e.target.value }))}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                   required
@@ -1651,7 +1650,7 @@ const AdminDashboard = () => {
                   <label className="block text-sm font-medium text-gray-700">Delivery Info Text</label>
                 <input
                   type="text"
-                  value={homepageSettingsFormData.delivery_info_text}
+                  value={homepageSettingsFormData.delivery_info_text ?? ''}
                   onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, delivery_info_text: e.target.value }))}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                   required
@@ -1661,7 +1660,7 @@ const AdminDashboard = () => {
                   <label className="block text-sm font-medium text-gray-700">Menu Section Title</label>
                   <input
                     type="text"
-                    value={homepageSettingsFormData.menu_title}
+                    value={homepageSettingsFormData.menu_title ?? ''}
                     onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, menu_title: e.target.value }))}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
@@ -1670,7 +1669,7 @@ const AdminDashboard = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Serviceable Pincodes</label>
                   <textarea
-                    value={homepageSettingsFormData.serviceable_pincodes}
+                    value={homepageSettingsFormData.serviceable_pincodes ?? ''}
                     onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, serviceable_pincodes: e.target.value }))}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     rows={3}
@@ -1688,7 +1687,7 @@ const AdminDashboard = () => {
                 >
                   {heroImagePreview ? (
                     <div className="relative">
-                      <img src={heroImagePreview} alt="Preview" className="max-w-full h-auto" />
+                      <img src={(heroImagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
                       <button
                         type="button"
                         onClick={removeHeroImage}
