@@ -136,6 +136,7 @@ type AppContextType = {
   cart: CartItem[];
   customerInfo: CustomerInfo;
   orderNumber: string;
+  orderTotal: number;
   products: Product[];
   serviceablePincodes: string[];
   homepageSettings: {
@@ -146,6 +147,9 @@ type AppContextType = {
     deliveryInfoText: string;
     menuTitle: string;
     serviceablePincodes: string[];
+    aboutTitle: string;
+    aboutContent: string;
+    aboutImageUrl: string;
   } | null;
   lastRefreshTime: Date;
   subtotal: number;
@@ -174,6 +178,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({ name: '', phone: '', email: '', address: '', pincode: '', addressType: 'Home', landmark: '' });
   const [orderNumber, setOrderNumber] = useState('');
+  const [orderTotal, setOrderTotal] = useState<number>(0);
   const [products, setProducts] = useState<Product[]>([]);
   const [serviceablePincodes, setServiceablePincodes] = useState<string[]>([]);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
@@ -185,6 +190,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     deliveryInfoText: string;
     menuTitle: string;
     serviceablePincodes: string[];
+    aboutTitle: string;
+    aboutContent: string;
+    aboutImageUrl: string;
   } | null>(null);
 
   // Fetch data from database on mount
@@ -218,7 +226,10 @@ export const AppProvider = ({ children }: AppProviderProps) => {
             orderDeadlineText: settingsData.order_deadline_text,
             deliveryInfoText: settingsData.delivery_info_text,
             menuTitle: settingsData.menu_title || 'THIS WEEK\'S MENU',
-            serviceablePincodes: settingsData.serviceable_pincodes ? settingsData.serviceable_pincodes.split(',').map(p => p.trim()) : ['110001', '110002', '110003', '110016', '110017', '110019', '110021', '110024', '110025', '110027', '110029', '110030', '122018']
+            serviceablePincodes: settingsData.serviceable_pincodes ? settingsData.serviceable_pincodes.split(',').map(p => p.trim()) : ['110001', '110002', '110003', '110016', '110017', '110019', '110021', '110024', '110025', '110027', '110029', '110030', '122018'],
+            aboutTitle: settingsData.about_title || 'About Ebby',
+            aboutContent: settingsData.about_content || 'Our story of passion for baking and commitment to quality.',
+            aboutImageUrl: settingsData.about_image_url || ''
           });
         }
       } catch (error) {
@@ -354,9 +365,13 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         // Don't fail the order creation if email fails
       }
 
+      // Store the total amount before clearing cart
+      const finalTotal = total;
+      
       // Update local state
       setCustomerInfo(customerData);
       setOrderNumber(orderNumber);
+      setOrderTotal(finalTotal);
       setCurrentPage('confirmation');
       setCart([]);
       
@@ -372,6 +387,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       setCurrentPage('homepage');
       setCustomerInfo({ name: '', phone: '', email: '', address: '', pincode: '', addressType: 'Home', landmark: '' });
       setOrderNumber('');
+      setOrderTotal(0);
   };
 
   const refreshProducts = async () => {
@@ -415,7 +431,10 @@ export const AppProvider = ({ children }: AppProviderProps) => {
           orderDeadlineText: settingsData.order_deadline_text,
           deliveryInfoText: settingsData.delivery_info_text,
           menuTitle: settingsData.menu_title || 'THIS WEEK\'S MENU',
-          serviceablePincodes: settingsData.serviceable_pincodes ? settingsData.serviceable_pincodes.split(',').map(p => p.trim()) : ['110001', '110002', '110003', '110016', '110017', '110019', '110021', '110024', '110025', '110027', '110029', '110030', '122018']
+          serviceablePincodes: settingsData.serviceable_pincodes ? settingsData.serviceable_pincodes.split(',').map(p => p.trim()) : ['110001', '110002', '110003', '110016', '110017', '110019', '110021', '110024', '110025', '110027', '110029', '110030', '122018'],
+          aboutTitle: settingsData.about_title || 'About Ebby',
+          aboutContent: settingsData.about_content || 'Our story of passion for baking and commitment to quality.',
+          aboutImageUrl: settingsData.about_image_url || ''
         });
       }
     } catch (error) {
@@ -429,7 +448,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const total = subtotal + deliveryCharges;
 
   const value = {
-    currentPage, cart, customerInfo, orderNumber, products, serviceablePincodes, homepageSettings, lastRefreshTime, subtotal, deliveryCharges, total, cartItemCount,
+    currentPage, cart, customerInfo, orderNumber, orderTotal, products, serviceablePincodes, homepageSettings, lastRefreshTime, subtotal, deliveryCharges, total, cartItemCount,
     setCurrentPage, addToCart, updateCartQuantity, removeFromCart, setCustomerInfo, placeOrder, resetApp, refreshProducts, refreshHomepageSettings
   };
 
@@ -464,7 +483,7 @@ const useFormValidation = (initialState: CustomerInfo, validationRules: (values:
 // --- src/components/pages/Homepage.tsx ---
 
 const Homepage = () => {
-  const { products, serviceablePincodes, homepageSettings, lastRefreshTime, addToCart, cartItemCount, subtotal, setCurrentPage, updateCartQuantity, removeFromCart, refreshProducts } = useAppContext();
+  const { products, serviceablePincodes, homepageSettings, lastRefreshTime, addToCart, cartItemCount, subtotal, deliveryCharges, total, setCurrentPage, updateCartQuantity, removeFromCart, refreshProducts } = useAppContext();
   
   // Debug logging for products
   useEffect(() => {
@@ -474,24 +493,34 @@ const Homepage = () => {
       console.log('First product:', products[0]);
     }
   }, [products]);
-  const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
   const [pincode, setPincode] = useState("");
   const [pincodeValidation, setPincodeValidation] = useState<PincodeValidationResult | null>(null);
   const [showMiniCart, setShowMiniCart] = useState(false);
-  const { cart } = useAppContext();
+  const { cart, addToCart: addToCartContext, updateCartQuantity: updateCartQuantityContext, removeFromCart: removeFromCartContext } = useAppContext();
   
   const handlePincodeValidationChange = useCallback((result: PincodeValidationResult) => {
     setPincodeValidation(result);
   }, []);
 
-  const handleAddToCart = (product: Product, quantity: number) => {
-    console.log('Adding to cart:', product.name, 'quantity:', quantity);
-    addToCart(product, quantity);
-    // Keep the quantity selected by user - don't reset to 0
-  };
-
-  const updateQuantity = (productId: number, quantity: number) => {
-    setQuantities(prev => ({ ...prev, [productId]: Math.max(0, quantity) }));
+  const updateQuantity = (productId: number, newQuantity: number) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    const currentCartItem = cart.find(item => item.id === productId);
+    const currentQuantity = currentCartItem?.quantity || 0;
+    
+    if (newQuantity <= 0) {
+      // Remove from cart if quantity is 0 or less
+      if (currentCartItem) {
+        removeFromCartContext(productId);
+      }
+    } else if (currentCartItem) {
+      // Update existing cart item
+      updateCartQuantityContext(productId, newQuantity);
+    } else {
+      // Add new item to cart
+      addToCartContext(product, newQuantity);
+    }
   };
 
   return (
@@ -503,7 +532,17 @@ const Homepage = () => {
                 <Home className="h-6 w-6 text-orange-600" />
                 <span className="text-xl font-bold text-orange-800">{homepageSettings?.brandName || 'Ebby\'s Breads'}</span>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="flex sm:hidden items-center space-x-2">
+                  <PincodeInput
+                    value={pincode}
+                    onChange={setPincode}
+                    onValidationChange={handlePincodeValidationChange}
+                    placeholder="Pincode"
+                    className="w-32"
+                    showValidationMessage={false}
+                  />
+                </div>
                 <div className="hidden sm:flex items-center space-x-2">
                   <PincodeInput
                     value={pincode}
@@ -514,28 +553,13 @@ const Homepage = () => {
                     showValidationMessage={false}
                   />
                 </div>
-                <div className="relative"><Button variant="ghost" size="sm" onClick={() => setShowMiniCart(!showMiniCart)}><ShoppingCart className="h-5 w-5" />{cartItemCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-orange-600 text-white">{cartItemCount}</Badge>}</Button></div>
+                <div className="relative"><Button variant="ghost" size="sm" onClick={() => setShowMiniCart(!showMiniCart)} className="p-2 sm:p-1"><ShoppingCart className="h-5 w-5" />{cartItemCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-orange-600 text-white">{cartItemCount}</Badge>}</Button></div>
                 <Link to="/admin">
-                  <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Admin
+                  <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-2 sm:px-3">
+                    <Settings className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Admin</span>
                   </Button>
                 </Link>
-                <Button variant="ghost" size="sm" onClick={() => setCurrentPage('test')} className="text-green-600">Test DB</Button>
-                <Button variant="ghost" size="sm" onClick={() => setCurrentPage('storage')} className="text-blue-600">Test Storage</Button>
-                <Button variant="ghost" size="sm" onClick={() => setCurrentPage('pincode')} className="text-purple-600">Test Pincode</Button>
-                <Button variant="ghost" size="sm" onClick={() => setCurrentPage('pincode-simple')} className="text-indigo-600">Simple Test</Button>
-                <Button variant="ghost" size="sm" onClick={refreshProducts} className="text-purple-600">Refresh Products</Button>
-                <Button variant="ghost" size="sm" onClick={async () => {
-                  try {
-                    const allProducts = await productService.getAll();
-                    console.log('All products:', allProducts);
-                    alert(`Found ${allProducts.length} total products, ${allProducts.filter(p => p.is_active).length} active`);
-                  } catch (error) {
-                    console.error('Error fetching all products:', error);
-                    alert('Error fetching products');
-                  }
-                }} className="text-orange-600">Debug Products</Button>
               </div>
             </div>
             {pincodeValidation && pincodeValidation.isValid && pincodeValidation.isServiceable && (
@@ -561,22 +585,36 @@ const Homepage = () => {
                 </div>
                 <div className="space-y-8">
                   <div className="space-y-4">
-                    <h1 className="text-5xl lg:text-6xl font-bold text-gray-800 leading-tight">
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-800 leading-tight">
                       {homepageSettings?.brandName?.split(' ')[0] || 'Ebby\'s'}<br />
                       <span className="text-orange-600">{homepageSettings?.brandName?.split(' ').slice(1).join(' ') || 'Breads'}</span>
                     </h1>
-                    <p className="text-xl text-gray-600 leading-relaxed">
+                    <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
                       {homepageSettings?.tagline || 'Fresh sourdough bread and artisanal treats. New menu every week, delivered fresh to your door.'}
                     </p>
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3 text-gray-700">
-                      <Clock className="h-5 w-5 text-orange-600" />
-                      <span className="font-medium">{homepageSettings?.orderDeadlineText || 'Order by Sunday 11:59 PM for next week delivery'}</span>
+                  <div className="space-y-4">
+                    <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm">
+                      <div className="flex items-center space-x-3">
+                        <div className="bg-orange-100 p-2 rounded-full">
+                          <Clock className="h-6 w-6 text-orange-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-orange-800 uppercase tracking-wide">Order Deadline</p>
+                          <p className="text-lg font-bold text-gray-800">{homepageSettings?.orderDeadlineText || 'Order by Sunday 11:59 PM for next week delivery'}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-3 text-gray-700">
-                      <MapPin className="h-5 w-5 text-orange-600" />
-                      <span className="font-medium">{homepageSettings?.deliveryInfoText || 'Deliveries Wednesday onwards • Cash on Delivery'}</span>
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm">
+                      <div className="flex items-center space-x-3">
+                        <div className="bg-green-100 p-2 rounded-full">
+                          <MapPin className="h-6 w-6 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-green-800 uppercase tracking-wide">Delivery Info</p>
+                          <p className="text-lg font-bold text-gray-800">{homepageSettings?.deliveryInfoText || 'Deliveries Wednesday onwards • Cash on Delivery'}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -589,7 +627,7 @@ const Homepage = () => {
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-800 mb-4">{homepageSettings?.menuTitle || 'THIS WEEK\'S MENU'}</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {products.map(product => (
                 <Card key={product.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
                   <div className="relative overflow-hidden">
@@ -607,13 +645,30 @@ const Homepage = () => {
                       </div>
                       <div className="flex items-center justify-center space-x-4"><p className="text-2xl font-bold text-orange-600">₹{product.price}</p><p className="text-gray-500 text-sm">({product.weight})</p></div>
                     </div>
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center justify-center">
                       <div className="flex items-center border border-orange-200 rounded-full h-10">
-                        <Button variant="ghost" size="sm" onClick={() => updateQuantity(product.id, (quantities[product.id] || 0) - 1)} className="rounded-full w-10 h-10 p-0 flex items-center justify-center text-orange-600 hover:bg-orange-50" disabled={!quantities[product.id] || quantities[product.id] <= 0}><Minus className="h-5 w-5" /></Button>
-                        <span className="px-4 py-2 text-center min-w-[3rem] flex items-center justify-center h-full font-medium text-gray-800">{quantities[product.id] || 0}</span>
-                        <Button variant="ghost" size="sm" onClick={() => updateQuantity(product.id, (quantities[product.id] || 0) + 1)} className="rounded-full w-10 h-10 p-0 flex items-center justify-center text-orange-600 hover:bg-orange-50"><Plus className="h-5 w-5" /></Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) - 1)} 
+                          className="rounded-full w-10 h-10 p-0 flex items-center justify-center text-orange-600 hover:bg-orange-50" 
+                          disabled={!pincodeValidation?.isServiceable || !cart.find(item => item.id === product.id) || (cart.find(item => item.id === product.id)?.quantity || 0) <= 0}
+                        >
+                          <Minus className="h-5 w-5" />
+                        </Button>
+                        <span className="px-4 py-2 text-center min-w-[3rem] flex items-center justify-center h-full font-medium text-gray-800">
+                          {cart.find(item => item.id === product.id)?.quantity || 0}
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) + 1)} 
+                          className="rounded-full w-10 h-10 p-0 flex items-center justify-center text-orange-600 hover:bg-orange-50"
+                          disabled={!pincodeValidation?.isServiceable}
+                        >
+                          <Plus className="h-5 w-5" />
+                        </Button>
                       </div>
-                      <Button onClick={() => handleAddToCart(product, quantities[product.id] || 1)} className="flex-1 h-10 rounded-full shadow-md hover:shadow-lg transition-all duration-200" disabled={!pincodeValidation?.isServiceable}>Add to Cart</Button>
                     </div>
                     {!pincodeValidation?.isServiceable && <p className="text-xs text-gray-500 text-center mt-2">Check delivery availability first</p>}
                   </CardContent>
@@ -640,6 +695,8 @@ const Homepage = () => {
           </div>
         )}
 
+
+
         {showMiniCart && cart.length > 0 && (
           <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setShowMiniCart(false)}>
             <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl max-h-[70vh] overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -650,38 +707,38 @@ const Homepage = () => {
                     <div key={item.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                       <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded" />
                       <div className="flex-1"><h4 className="font-medium text-gray-800 text-sm">{item.name}</h4><p className="text-gray-600 text-xs">₹{item.price} × {item.quantity}</p></div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-3">
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={() => updateCartQuantity(item.id, item.quantity - 1)} 
-                          className="w-8 h-8 p-0 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                          className="w-10 h-10 p-0 border-2 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400 rounded-full"
                         >
-                          <Minus className="h-4 w-4" />
+                          <Minus className="h-5 w-5" />
                         </Button>
-                        <span className="text-sm font-medium w-8 text-center text-gray-800">{item.quantity}</span>
+                        <span className="text-base font-bold w-10 text-center text-gray-800">{item.quantity}</span>
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={() => updateCartQuantity(item.id, item.quantity + 1)} 
-                          className="w-8 h-8 p-0 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                          className="w-10 h-10 p-0 border-2 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400 rounded-full"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-5 w-5" />
                         </Button>
                       </div>
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => removeFromCart(item.id)} 
-                        className="w-8 h-8 p-0 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                        className="w-10 h-10 p-0 border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 rounded-full"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-5 w-5" />
                       </Button>
                     </div>
                   ))}
                 </div>
                 <div className="border-t pt-4 mt-4">
-                  <div className="flex justify-between items-center mb-4"><span className="text-lg font-bold text-gray-800">Total: ₹{subtotal}</span></div>
+                  <div className="flex justify-between items-center mb-4"><span className="text-lg font-bold text-gray-800">Total: ₹{total}</span></div>
                   <Button onClick={() => { setShowMiniCart(false); setCurrentPage('checkout'); }} className="w-full">Proceed to Checkout</Button>
                 </div>
               </div>
@@ -716,26 +773,26 @@ const CheckoutPage = () => {
                           variant="outline" 
                           size="sm" 
                           onClick={() => updateCartQuantity(item.id, item.quantity - 1)} 
-                          className="w-10 h-10 p-0 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                          className="w-12 h-12 p-0 border-2 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400 rounded-full"
                         >
-                          <Minus className="h-5 w-5" />
+                          <Minus className="h-6 w-6" />
                         </Button>
-                        <span className="font-medium w-10 text-center text-gray-800 text-lg">{item.quantity}</span>
+                        <span className="font-bold w-12 text-center text-gray-800 text-xl">{item.quantity}</span>
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={() => updateCartQuantity(item.id, item.quantity + 1)} 
-                          className="w-10 h-10 p-0 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                          className="w-12 h-12 p-0 border-2 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400 rounded-full"
                         >
-                          <Plus className="h-5 w-5" />
+                          <Plus className="h-6 w-6" />
                         </Button>
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={() => removeFromCart(item.id)} 
-                          className="w-10 h-10 p-0 ml-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                          className="w-12 h-12 p-0 ml-3 border-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 rounded-full"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Trash2 className="h-6 w-6" />
                         </Button>
                       </div>
                     </div>
@@ -827,7 +884,7 @@ const AccountPage = () => {
 // --- src/components/pages/ConfirmationPage.tsx ---
 
 const ConfirmationPage = () => {
-  const { orderNumber, total, customerInfo, resetApp } = useAppContext();
+  const { orderNumber, orderTotal, customerInfo, resetApp } = useAppContext();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-emerald-50">
@@ -835,8 +892,9 @@ const ConfirmationPage = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8"><div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4"><Check className="h-8 w-8 text-green-600" /></div><h2 className="text-3xl font-bold text-gray-800 mb-2">Thank You!</h2><p className="text-gray-600">Your order has been placed successfully</p></div>
-          <Card className="mb-6"><CardHeader><CardTitle>Order Details</CardTitle></CardHeader><CardContent><div className="space-y-3"><div className="flex justify-between"><span className="text-gray-600">Order Number</span><span className="font-bold text-orange-600">{orderNumber}</span></div><div className="flex justify-between"><span className="text-gray-600">Total Amount</span><span className="font-bold">₹{total}</span></div><div className="flex justify-between"><span className="text-gray-600">Payment Method</span><span className="font-medium">Cash on Delivery</span></div></div></CardContent></Card>
+          <Card className="mb-6"><CardHeader><CardTitle>Order Details</CardTitle></CardHeader><CardContent><div className="space-y-3"><div className="flex justify-between"><span className="text-gray-600">Order Number</span><span className="font-bold text-orange-600">{orderNumber}</span></div><div className="flex justify-between"><span className="text-gray-600">Total Amount</span><span className="font-bold">₹{orderTotal}</span></div><div className="flex justify-between"><span className="text-gray-600">Payment Method</span><span className="font-medium">Cash on Delivery</span></div></div></CardContent></Card>
           <Card className="mb-6"><CardHeader><CardTitle>Delivery Information</CardTitle></CardHeader><CardContent><div className="space-y-3"><div><span className="text-gray-600 block">Delivery Address</span><span className="font-medium">{customerInfo.address}, {customerInfo.pincode}</span></div><div><span className="text-gray-600 block">Expected Delivery</span><span className="font-medium text-green-600">Wednesday - Friday</span></div></div></CardContent></Card>
+          <Card className="mb-6"><CardHeader><CardTitle>Customer Support</CardTitle></CardHeader><CardContent><div className="space-y-4"><div className="flex items-center space-x-3"><Phone className="h-5 w-5 text-orange-600" /><div><span className="text-gray-600 block text-sm">Phone Support</span><span className="font-medium">+91 98765 43210</span></div></div><div className="flex items-center space-x-3"><Clock className="h-5 w-5 text-orange-600" /><div><span className="text-gray-600 block text-sm">Support Hours</span><span className="font-medium">Monday - Saturday: 9:00 AM - 7:00 PM</span></div></div><div className="flex items-center space-x-3"><Instagram className="h-5 w-5 text-orange-600" /><div><span className="text-gray-600 block text-sm">Follow Us</span><span className="font-medium">@ebbysbreads</span></div></div><div className="pt-3 border-t border-gray-200"><p className="text-sm text-gray-600">Need help with your order? Contact us anytime during business hours. We're here to help!</p></div></div></CardContent></Card>
           <div className="text-center mt-8"><Button onClick={resetApp} variant="outline" className="px-8">Continue Shopping</Button></div>
         </div>
       </div>

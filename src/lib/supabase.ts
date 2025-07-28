@@ -148,6 +148,9 @@ export interface Database {
           delivery_info_text: string;
           menu_title: string;
           serviceable_pincodes: string;
+          about_title: string | null;
+          about_content: string | null;
+          about_image_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -160,6 +163,9 @@ export interface Database {
           delivery_info_text: string;
           menu_title?: string;
           serviceable_pincodes?: string;
+          about_title?: string | null;
+          about_content?: string | null;
+          about_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -172,6 +178,9 @@ export interface Database {
           delivery_info_text?: string;
           menu_title?: string;
           serviceable_pincodes?: string;
+          about_title?: string | null;
+          about_content?: string | null;
+          about_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };

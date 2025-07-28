@@ -76,6 +76,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showHomepageSettingsModal, setShowHomepageSettingsModal] = useState(false);
+  const [showHeroImageUploadModal, setShowHeroImageUploadModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productFormData, setProductFormData] = useState<ProductFormData>({
     name: '',
@@ -156,7 +157,7 @@ const AdminDashboard = () => {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
+    setLoading(true);
       await Promise.all([
         fetchProducts(),
         fetchOrders(),
@@ -167,7 +168,7 @@ const AdminDashboard = () => {
       setHasError(true);
       setErrorMessage(error instanceof Error ? error.message : 'Unknown error occurred');
     } finally {
-      setLoading(false);
+    setLoading(false);
     }
   };
 
@@ -211,11 +212,11 @@ const AdminDashboard = () => {
 
   const deleteProduct = async (productId: number) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await productService.delete(productId);
+    try {
+      await productService.delete(productId);
         await fetchProducts();
-      } catch (error) {
-        console.error('Error deleting product:', error);
+    } catch (error) {
+      console.error('Error deleting product:', error);
       }
     }
   };
@@ -366,6 +367,24 @@ const AdminDashboard = () => {
     setHeroImagePreview(null);
   };
 
+  const handleRemoveHeroImage = async () => {
+    if (!homepageSettings) return;
+    
+    try {
+      const updatedSettings = {
+        ...homepageSettings,
+        hero_image_url: ''
+      };
+      
+      await homepageSettingsService.update(homepageSettings.id, updatedSettings);
+      await fetchHomepageSettings();
+      alert('Hero image removed successfully!');
+    } catch (error) {
+      console.error('Error removing hero image:', error);
+      alert('Error removing hero image. Please try again.');
+    }
+  };
+
   const openHomepageSettingsModal = () => {
     setShowHomepageSettingsModal(true);
     // Set the current hero image preview if it exists
@@ -376,13 +395,23 @@ const AdminDashboard = () => {
     }
   };
 
+  const openHeroImageUploadModal = () => {
+    setShowHeroImageUploadModal(true);
+    // Set the current hero image preview if it exists
+    if (homepageSettings?.hero_image_url) {
+      setHeroImagePreview(homepageSettings.hero_image_url);
+    } else {
+      setHeroImagePreview(null);
+    }
+  };
+
   const handleHomepageSettingsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUploading(true);
-
+      setUploading(true);
+      
     try {
       let heroImageUrl = homepageSettings?.hero_image_url || '';
-
+      
       // Handle hero image upload if there's a new image
       if (heroImagePreview && heroImagePreview !== homepageSettings?.hero_image_url) {
         try {
@@ -400,7 +429,7 @@ const AdminDashboard = () => {
           return;
         }
       }
-
+      
       const settingsData = {
         brand_name: homepageSettingsFormData.brand_name.trim(),
         hero_image_url: heroImageUrl,
@@ -410,13 +439,13 @@ const AdminDashboard = () => {
         menu_title: homepageSettingsFormData.menu_title.trim(),
         serviceable_pincodes: homepageSettingsFormData.serviceable_pincodes.trim()
       };
-
+      
       if (homepageSettings) {
         await homepageSettingsService.update(homepageSettings.id, settingsData);
       } else {
         await homepageSettingsService.create(settingsData);
       }
-
+      
       setShowHomepageSettingsModal(false);
       setHeroImagePreview(null);
       await fetchHomepageSettings();
@@ -424,6 +453,51 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error saving homepage settings:', error);
       alert('Error saving homepage settings. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleHeroImageUploadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!homepageSettings || !heroImagePreview) return;
+
+    setUploading(true);
+    try {
+      let heroImageUrl = '';
+
+      // Handle hero image upload
+      if (heroImagePreview && heroImagePreview !== homepageSettings.hero_image_url) {
+        try {
+          // Create a file from the data URL if it's a new image
+          const response = await fetch(heroImagePreview);
+          const blob = await response.blob();
+          const file = new File([blob], `hero-image-${Date.now()}.jpg`, { type: blob.type });
+          
+          const fileName = `homepage/hero-${Date.now()}-${file.name}`;
+          heroImageUrl = await fileService.uploadImage(file, fileName);
+          console.log('Hero image uploaded successfully:', heroImageUrl);
+        } catch (uploadError) {
+          console.error('Error uploading hero image:', uploadError);
+          alert('Error uploading hero image. Please try again.');
+          return;
+        }
+      }
+
+      // Update the homepage settings with the new hero image
+      const updatedSettings = {
+        ...homepageSettings,
+        hero_image_url: heroImageUrl
+      };
+
+      await homepageSettingsService.update(homepageSettings.id, updatedSettings);
+      setShowHeroImageUploadModal(false);
+      setHeroImagePreview(null);
+      await fetchHomepageSettings();
+      alert('Hero image updated successfully!');
+    } catch (error) {
+      console.error('Error updating hero image:', error);
+      alert('Error updating hero image. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -491,12 +565,12 @@ const AdminDashboard = () => {
             alt={product.name}
             className="w-16 h-16 object-cover rounded"
           />
-          <div>
+            <div>
             <h3 className="font-medium text-gray-900">{product.name}</h3>
             <p className="text-sm text-gray-500">₹{product.price}</p>
             <p className="text-xs text-gray-400">Sort Order: {product.sort_order || 0}</p>
+            </div>
           </div>
-        </div>
         <div className="flex items-center space-x-2">
           <span className={`px-2 py-1 text-xs rounded-full ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             {product.is_active ? 'Active' : 'Inactive'}
@@ -519,8 +593,8 @@ const AdminDashboard = () => {
           >
             Retry
           </button>
-        </div>
-      </div>
+            </div>
+          </div>
     );
   }
 
@@ -543,7 +617,7 @@ const AdminDashboard = () => {
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0 flex items-center">
                 <h1 className="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
-              </div>
+            </div>
               <button
                 onClick={goToHomepage}
                 className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center transition-colors duration-200"
@@ -553,9 +627,9 @@ const AdminDashboard = () => {
               </button>
             </div>
           </div>
+          </div>
         </div>
-      </div>
-
+        
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow">
           <div className="border-b border-gray-200">
@@ -605,7 +679,7 @@ const AdminDashboard = () => {
                 Homepage Settings
               </button>
             </nav>
-          </div>
+            </div>
 
           <div className="p-6">
             {activeTab === 'overview' && <OverviewTab />}
@@ -634,8 +708,8 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
-                <div>
+        </div>
+                    <div>
                   <label className="block text-sm font-medium text-gray-700">Price (₹)</label>
                   <input
                     type="number"
@@ -644,8 +718,8 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
-                <div>
+                    </div>
+                    <div>
                   <label className="block text-sm font-medium text-gray-700">Weight</label>
                   <input
                     type="text"
@@ -654,7 +728,7 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
+                    </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Description</label>
                   <textarea
@@ -714,14 +788,14 @@ const AdminDashboard = () => {
                     {imagePreview ? (
                       <div className="relative">
                         <img src={imagePreview} alt="Preview" className="max-w-full h-auto" />
-                        <button
+                    <button
                           type="button"
                           onClick={removeImage}
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
+                    >
                           ✕
-                        </button>
-                      </div>
+                    </button>
+        </div>
                     ) : (
                       <div>
                         <input
@@ -734,9 +808,9 @@ const AdminDashboard = () => {
                         <label htmlFor="product-image" className="cursor-pointer text-blue-600 hover:underline">
                           Click to upload or drag and drop an image here
                         </label>
-                      </div>
+      </div>
                     )}
-                  </div>
+    </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <button
@@ -781,8 +855,8 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
-                <div>
+      </div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700">Tagline</label>
                   <textarea
                     value={homepageSettingsFormData.tagline}
@@ -791,8 +865,8 @@ const AdminDashboard = () => {
                     rows={3}
                     required
                   />
-                </div>
-                <div>
+                  </div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700">Order Deadline Text</label>
                   <input
                     type="text"
@@ -801,7 +875,7 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
+                  </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Delivery Info Text</label>
                   <input
@@ -811,7 +885,7 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
+                  </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Menu Section Title</label>
                   <input
@@ -844,14 +918,14 @@ const AdminDashboard = () => {
                     {heroImagePreview ? (
                       <div className="relative">
                         <img src={heroImagePreview} alt="Preview" className="max-w-full h-auto" />
-                        <button
+                  <button
                           type="button"
                           onClick={removeHeroImage}
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
+                  >
                           ✕
-                        </button>
-                      </div>
+                  </button>
+      </div>
                     ) : (
                       <div>
                         <input
@@ -925,8 +999,8 @@ const AdminDashboard = () => {
 
   function ProductsTab() {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900">Products</h2>
           <div className="flex space-x-2">
             {!isReordering && (
@@ -960,23 +1034,23 @@ const AdminDashboard = () => {
                 </button>
               </>
             )}
-            <button
-              onClick={() => openProductModal()}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
-            </button>
+        <button
+          onClick={() => openProductModal()}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Product
+        </button>
           </div>
-        </div>
-
+      </div>
+      
         {isReordering ? (
           <div className="space-y-4">
             <div className="bg-blue-50 p-4 rounded-lg">
               <p className="text-blue-800">
                 <strong>Instructions:</strong> Drag and drop products to reorder them. The order will be saved when you click "Save Order".
               </p>
-            </div>
+        </div>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -993,65 +1067,65 @@ const AdminDashboard = () => {
                 </div>
               </SortableContext>
             </DndContext>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.map((product) => (
               <div key={product.id} className="bg-white border rounded-lg shadow-sm overflow-hidden">
                 <img
                   src={product.image_url || '/placeholder-product.jpg'}
                   alt={product.name}
                   className="w-full h-48 object-cover"
                 />
-                <div className="p-4">
+              <div className="p-4">
                   <h3 className="font-medium text-gray-900">{product.name}</h3>
                   <p className="text-sm text-gray-500">{product.description}</p>
                   <p className="text-lg font-semibold text-gray-900 mt-2">₹{product.price}</p>
                   <p className="text-sm text-gray-500">Weight: {product.weight}</p>
                   <p className="text-sm text-gray-500">Stock: {product.stock}</p>
                   <div className="flex items-center justify-between mt-4">
-                    <div className="flex space-x-1">
+                  <div className="flex space-x-1">
                       {product.is_bestseller && (
                         <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">Best Seller</span>
                       )}
                       {product.is_new && (
                         <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">New</span>
                       )}
-                    </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {product.is_active ? 'Active' : 'Inactive'}
-                    </span>
                   </div>
+                    <span className={`px-2 py-1 text-xs rounded-full ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {product.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
                   <div className="flex space-x-2 mt-4">
-                    <button
-                      onClick={() => openProductModal(product)}
+                  <button
+                    onClick={() => openProductModal(product)}
                       className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 text-sm"
-                    >
+                  >
                       <Edit className="h-4 w-4 inline mr-1" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => toggleProductStatus(product.id)}
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => toggleProductStatus(product.id)}
                       className="flex-1 bg-gray-600 text-white px-3 py-2 rounded-md hover:bg-gray-700 text-sm"
                     >
                       {product.is_active ? <EyeOff className="h-4 w-4 inline mr-1" /> : <Eye className="h-4 w-4 inline mr-1" />}
-                      {product.is_active ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button
-                      onClick={() => deleteProduct(product.id)}
+                    {product.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                  <button
+                    onClick={() => deleteProduct(product.id)}
                       className="flex-1 bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 text-sm"
-                    >
+                  >
                       <Trash2 className="h-4 w-4 inline mr-1" />
                       Delete
-                    </button>
-                  </div>
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
   }
 
   function OrdersTab() {
@@ -1119,65 +1193,89 @@ const AdminDashboard = () => {
 
   function HomepageSettingsTab() {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900">Homepage Settings</h2>
-          <button
-            onClick={openHomepageSettingsModal}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
-          >
+        <button
+          onClick={openHomepageSettingsModal}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
+        >
             <Settings className="h-4 w-4 mr-2" />
-            Edit Settings
-          </button>
-        </div>
-
+          Edit Settings
+        </button>
+      </div>
+      
         {homepageSettings ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white border rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Current Settings</h3>
-              <div className="space-y-4">
-                <div>
+            <div className="space-y-4">
+              <div>
                   <label className="block text-sm font-medium text-gray-700">Brand Name</label>
                   <p className="mt-1 text-sm text-gray-900">{homepageSettings.brand_name}</p>
-                </div>
-                <div>
+              </div>
+              <div>
                   <label className="block text-sm font-medium text-gray-700">Tagline</label>
                   <p className="mt-1 text-sm text-gray-900">{homepageSettings.tagline}</p>
-                </div>
-                <div>
+              </div>
+              <div>
                   <label className="block text-sm font-medium text-gray-700">Menu Title</label>
                   <p className="mt-1 text-sm text-gray-900">{homepageSettings.menu_title}</p>
-                </div>
-                <div>
+              </div>
+              <div>
                   <label className="block text-sm font-medium text-gray-700">Order Deadline</label>
                   <p className="mt-1 text-sm text-gray-900">{homepageSettings.order_deadline_text}</p>
-                </div>
+              </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Delivery Info</label>
                   <p className="mt-1 text-sm text-gray-900">{homepageSettings.delivery_info_text}</p>
-                </div>
+            </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Serviceable Pincodes</label>
                   <p className="mt-1 text-sm text-gray-900">{homepageSettings.serviceable_pincodes}</p>
-                </div>
+          </div>
               </div>
             </div>
             <div className="bg-white border rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Hero Image</h3>
-              {homepageSettings.hero_image_url ? (
-                <img
-                  src={homepageSettings.hero_image_url}
-                  alt="Hero"
+            {homepageSettings.hero_image_url ? (
+                <div className="space-y-4">
+                <img 
+                  src={homepageSettings.hero_image_url} 
+                  alt="Hero" 
                   className="w-full h-48 object-cover rounded-lg"
                 />
-              ) : (
-                <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">No hero image set</p>
-                </div>
-              )}
-            </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={openHeroImageUploadModal}
+                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                    >
+                      Change Image
+                    </button>
+                    <button
+                      onClick={handleRemoveHeroImage}
+                      className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+              </div>
+            ) : (
+                <div className="space-y-4">
+                  <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500">No hero image set</p>
+                  </div>
+                  <button
+                    onClick={openHeroImageUploadModal}
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+                  >
+                    Upload Hero Image
+                  </button>
+              </div>
+            )}
           </div>
-        ) : (
+        </div>
+      ) : (
           <div className="text-center py-12">
             <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Homepage Settings Found</h3>
@@ -1188,11 +1286,452 @@ const AdminDashboard = () => {
             >
               Create Settings
             </button>
+        </div>
+      )}
+    </div>
+  );
+  }
+
+  // Hero Image Upload Modal
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Image Upload Modal */}
+      {showHeroImageUploadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Upload Hero Image</h3>
+              <button
+                onClick={() => {
+                  setShowHeroImageUploadModal(false);
+                  setHeroImagePreview(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleHeroImageUploadSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Hero Image</label>
+                <div
+                  onDragOver={handleHeroImageDragOver}
+                  onDrop={handleHeroImageDrop}
+                  className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer"
+                >
+                  {heroImagePreview ? (
+                    <div className="relative">
+                      <img src={heroImagePreview} alt="Preview" className="max-w-full h-auto" />
+              <button
+                        type="button"
+                        onClick={removeHeroImage}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        ✕
+              </button>
+        </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="file"
+                        id="hero-image-upload"
+                        accept="image/*"
+                        onChange={handleHeroImageUpload}
+                        className="hidden"
+                      />
+                      <label htmlFor="hero-image-upload" className="cursor-pointer text-blue-600 hover:underline">
+                        Click to upload or drag and drop a hero image here
+                      </label>
           </div>
         )}
+                </div>
       </div>
-    );
-  }
+
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowHeroImageUploadModal(false);
+                    setHeroImagePreview(null);
+                  }}
+                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading || !heroImagePreview}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {uploading ? 'Uploading...' : 'Upload Image'}
+                </button>
+              </div>
+            </form>
+            </div>
+                </div>
+      )}
+
+      {/* Main Dashboard Content */}
+      <div className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0 flex items-center">
+                <h1 className="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
+              </div>
+              <button
+                onClick={goToHomepage}
+                className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center transition-colors duration-200"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                View Homepage
+              </button>
+                      </div>
+                    </div>
+                </div>
+              </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8 px-6">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'overview'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Package className="h-5 w-5 inline mr-2" />
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('products')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'products'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Package className="h-5 w-5 inline mr-2" />
+                Products
+              </button>
+              <button
+                onClick={() => setActiveTab('orders')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'orders'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <ShoppingCart className="h-5 w-5 inline mr-2" />
+                Orders
+              </button>
+              <button
+                onClick={() => setActiveTab('homepage')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'homepage'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Settings className="h-5 w-5 inline mr-2" />
+                Homepage Settings
+              </button>
+            </nav>
+                </div>
+
+          <div className="p-6">
+            {activeTab === 'overview' && <OverviewTab />}
+            {activeTab === 'products' && <ProductsTab />}
+            {activeTab === 'orders' && <OrdersTab />}
+            {activeTab === 'homepage' && <HomepageSettingsTab />}
+              </div>
+            </div>
+          </div>
+
+      {/* Product Modal */}
+      {showProductModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {editingProduct ? 'Edit Product' : 'Add New Product'}
+              </h3>
+              <form onSubmit={handleProductSubmit} className="space-y-4">
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  value={productFormData.name}
+                  onChange={(e) => setProductFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  required
+                />
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Price (₹)</label>
+                <input
+                  type="number"
+                  value={productFormData.price}
+                    onChange={(e) => setProductFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  required
+                />
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Weight</label>
+                <input
+                  type="text"
+                  value={productFormData.weight}
+                  onChange={(e) => setProductFormData(prev => ({ ...prev, weight: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  required
+                />
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  value={productFormData.description}
+                  onChange={(e) => setProductFormData(prev => ({ ...prev, description: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  rows={3}
+                    required
+                />
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Stock</label>
+                <input
+                  type="number"
+                  value={productFormData.stock}
+                    onChange={(e) => setProductFormData(prev => ({ ...prev, stock: parseInt(e.target.value) || 0 }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  required
+                />
+              </div>
+                <div className="flex space-x-4">
+                  <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={productFormData.is_bestseller}
+                  onChange={(e) => setProductFormData(prev => ({ ...prev, is_bestseller: e.target.checked }))}
+                      className="mr-2"
+                    />
+                    Best Seller
+                  </label>
+                  <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={productFormData.is_new}
+                  onChange={(e) => setProductFormData(prev => ({ ...prev, is_new: e.target.checked }))}
+                      className="mr-2"
+                    />
+                    New
+                  </label>
+                  <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={productFormData.is_active}
+                  onChange={(e) => setProductFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                      className="mr-2"
+                />
+                    Active
+                  </label>
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Product Image</label>
+                <div
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer"
+                >
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img src={imagePreview} alt="Preview" className="max-w-full h-auto" />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                          id="product-image"
+                      />
+                      <label htmlFor="product-image" className="cursor-pointer text-blue-600 hover:underline">
+                        Click to upload or drag and drop an image here
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowProductModal(false)}
+                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                  )}
+                    {editingProduct ? 'Update' : 'Create'}
+                </button>
+              </div>
+            </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Homepage Settings Modal */}
+      {showHomepageSettingsModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Homepage Settings</h3>
+              <form onSubmit={handleHomepageSettingsSubmit} className="space-y-4">
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Brand Name</label>
+                <input
+                  type="text"
+                  value={homepageSettingsFormData.brand_name}
+                  onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, brand_name: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  required
+                />
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Tagline</label>
+                <textarea
+                  value={homepageSettingsFormData.tagline}
+                  onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, tagline: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  rows={3}
+                  required
+                />
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Order Deadline Text</label>
+                <input
+                  type="text"
+                  value={homepageSettingsFormData.order_deadline_text}
+                  onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, order_deadline_text: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  required
+                />
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Delivery Info Text</label>
+                <input
+                  type="text"
+                  value={homepageSettingsFormData.delivery_info_text}
+                  onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, delivery_info_text: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  required
+                />
+              </div>
+              <div>
+                  <label className="block text-sm font-medium text-gray-700">Menu Section Title</label>
+                  <input
+                    type="text"
+                    value={homepageSettingsFormData.menu_title}
+                    onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, menu_title: e.target.value }))}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Serviceable Pincodes</label>
+                  <textarea
+                    value={homepageSettingsFormData.serviceable_pincodes}
+                    onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, serviceable_pincodes: e.target.value }))}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                    rows={3}
+                    placeholder="Enter pincodes separated by commas (e.g., 110001, 110002, 110003)"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Enter pincodes separated by commas where you deliver</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Hero Image</label>
+                <div
+                  onDragOver={handleHeroImageDragOver}
+                  onDrop={handleHeroImageDrop}
+                  className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer"
+                >
+                  {heroImagePreview ? (
+                    <div className="relative">
+                      <img src={heroImagePreview} alt="Preview" className="max-w-full h-auto" />
+                      <button
+                        type="button"
+                        onClick={removeHeroImage}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="file"
+                        id="hero-image"
+                        accept="image/*"
+                        onChange={handleHeroImageUpload}
+                        className="hidden"
+                      />
+                      <label htmlFor="hero-image" className="cursor-pointer text-blue-600 hover:underline">
+                        Click to upload or drag and drop a hero image here
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowHomepageSettingsModal(false)}
+                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                  )}
+                  Save Settings
+                </button>
+              </div>
+            </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default AdminDashboard;
