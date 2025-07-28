@@ -36,7 +36,7 @@ const OAuthProductionChecker: React.FC = () => {
     // Check Supabase connection
     let supabaseConnected = false;
     try {
-      const user = await authService.getCurrentUser();
+      await authService.getCurrentUser();
       supabaseConnected = true; // If no error, connection works
     } catch (error) {
       console.error('Supabase connection error:', error);
