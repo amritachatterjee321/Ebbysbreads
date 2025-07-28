@@ -258,7 +258,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     };
 
     fetchData();
-    setServiceablePincodes(initialServiceablePincodes);
+    // Don't override serviceable pincodes with hardcoded values
+    // They will be set from the database in fetchData()
   }, []);
 
   // Set up real-time subscription for product changes
