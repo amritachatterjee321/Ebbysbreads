@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { authService } from '../services/auth';
-import { Loader2, Shield, LogIn } from 'lucide-react';
+import { Loader2, Shield, LogIn, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -9,27 +9,91 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [configStatus, setConfigStatus] = useState<{ configured: boolean; missing: string[] } | null>(null);
+
+  useEffect(() => {
+    // Check configuration status on component mount
+    const status = authService.getConfigurationStatus();
+    setConfigStatus(status);
+  }, []);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // Check if Supabase is properly configured
+      if (!authService.isSupabaseConfigured()) {
+        setError('Supabase is not properly configured. Please check your environment variables.');
+        return;
+      }
+
       const { error } = await authService.signInWithGoogle();
       
       if (error) {
-        setError(error.message || 'Failed to sign in with Google');
+        console.error('Google OAuth error:', error);
+        
+        // Provide more specific error messages
+        if (error.message?.includes('redirect_uri_mismatch')) {
+          setError('Redirect URI mismatch. Please check your Google OAuth configuration.');
+        } else if (error.message?.includes('invalid_client')) {
+          setError('Invalid OAuth client. Please check your Google OAuth credentials.');
+        } else if (error.message?.includes('access_denied')) {
+          setError('Access denied. Please try again or contact support.');
+        } else {
+          setError(error.message || 'Failed to sign in with Google. Please try again.');
+        }
       } else {
         // The user will be redirected to Google OAuth
-        // When they return, the auth state will be updated
         console.log('Redirecting to Google OAuth...');
+        // Don't set loading to false here as the user will be redirected
       }
     } catch (err) {
-      setError('An unexpected error occurred');
       console.error('Login error:', err);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
-      setIsLoading(false);
+      // Only set loading to false if there was an error
+      if (error) {
+        setIsLoading(false);
+      }
     }
+  };
+
+  const renderConfigurationStatus = () => {
+    if (!configStatus) return null;
+
+    if (!configStatus.configured) {
+      return (
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-md p-4">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-yellow-400 mr-2 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-medium text-yellow-800">Configuration Required</h3>
+              <p className="text-sm text-yellow-700 mt-1">
+                Missing environment variables: {configStatus.missing.join(', ')}
+              </p>
+              <p className="text-sm text-yellow-600 mt-2">
+                Please create a <code className="bg-yellow-100 px-1 rounded">.env</code> file with your Supabase credentials.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mb-4 bg-green-50 border border-green-200 rounded-md p-4">
+        <div className="flex">
+          <CheckCircle className="h-5 w-5 text-green-400 mr-2 mt-0.5" />
+          <div>
+            <h3 className="text-sm font-medium text-green-800">Configuration Ready</h3>
+            <p className="text-sm text-green-700 mt-1">
+              Supabase is properly configured and ready for authentication.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -48,16 +112,23 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         </div>
 
         <div className="bg-white py-8 px-6 shadow rounded-lg">
+          {renderConfigurationStatus()}
+
           {error && (
             <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-sm text-red-600">{error}</p>
+              <div className="flex">
+                <AlertCircle className="h-5 w-5 text-red-400 mr-2 mt-0.5" />
+                <div>
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              </div>
             </div>
           )}
 
           <div className="space-y-4">
             <button
               onClick={handleGoogleLogin}
-              disabled={isLoading}
+              disabled={isLoading || !configStatus?.configured}
               className="w-full flex justify-center items-center px-4 py-3 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
@@ -93,10 +164,24 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
 
-        <div className="text-center">
+        <div className="text-center space-y-2">
           <p className="text-xs text-gray-400">
             Protected by Supabase Authentication
           </p>
+          <div className="space-y-1">
+            <a
+              href="/setup-guide"
+              className="text-xs text-blue-600 hover:text-blue-800 underline block"
+            >
+              Need help setting up Google OAuth?
+            </a>
+            <a
+              href="/troubleshooter"
+              className="text-xs text-blue-600 hover:text-blue-800 underline block"
+            >
+              Troubleshoot authentication issues
+            </a>
+          </div>
         </div>
       </div>
     </div>
