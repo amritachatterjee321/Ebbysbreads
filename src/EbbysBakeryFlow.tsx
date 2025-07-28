@@ -142,7 +142,7 @@ const initialProducts: Product[] = [
     { id: 5, name: "Rye Sesame Crackers", price: 180, weight: "200g", image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400&h=300&fit=crop", stock: 0, isNew: true, description: "Crispy rye crackers topped with sesame seeds, perfect for cheese platters." },
     { id: 6, name: "Cinnamon Swirl Bread", price: 320, weight: "450g", image: "https://images.unsplash.com/photo-1586444248902-2f64eddc13df?w=400&h=300&fit=crop", stock: 12, description: "Sweet sourdough bread with cinnamon swirl, perfect for breakfast toast." }
 ];
-const initialServiceablePincodes: string[] = ["110001", "110002", "110003", "110016", "110017", "110019", "110021", "110024", "110025", "110027", "110029", "110030", "122018"];
+
 
 
 // --- src/context/AppContext.tsx ---
@@ -196,7 +196,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const [orderNumber, setOrderNumber] = useState('');
   const [orderTotal, setOrderTotal] = useState<number>(0);
   const [products, setProducts] = useState<Product[]>([]);
-  const [serviceablePincodes, setServiceablePincodes] = useState<string[]>([]);
+
   const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
   const [homepageSettings, setHomepageSettings] = useState<{
     brandName: string;
@@ -474,7 +474,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const total = subtotal + deliveryCharges;
 
   const value = {
-    currentPage, cart, customerInfo, orderNumber, orderTotal, products, serviceablePincodes, homepageSettings, lastRefreshTime, subtotal, deliveryCharges, total, cartItemCount,
+    currentPage, cart, customerInfo, orderNumber, orderTotal, products, serviceablePincodes: homepageSettings?.serviceablePincodes || [], homepageSettings, lastRefreshTime, subtotal, deliveryCharges, total, cartItemCount,
     setCurrentPage, addToCart, updateCartQuantity, removeFromCart, setCustomerInfo, placeOrder, resetApp, refreshProducts, refreshHomepageSettings
   };
 
