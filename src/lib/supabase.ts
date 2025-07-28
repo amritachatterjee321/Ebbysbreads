@@ -176,6 +176,35 @@ export interface Database {
           updated_at?: string;
         };
       };
+      user_profiles: {
+        Row: {
+          id: string;
+          email: string;
+          name: string | null;
+          avatar_url: string | null;
+          role: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          name?: string | null;
+          avatar_url?: string | null;
+          role?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          name?: string | null;
+          avatar_url?: string | null;
+          role?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 } 

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   Package, 
   ShoppingCart, 
@@ -14,8 +13,7 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle,
-  Upload,
-  Home
+  Upload
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -23,7 +21,6 @@ import {
   KeyboardSensor, 
   PointerSensor, 
   useSensors,
-  useSensor,
   DragEndEvent
 } from '@dnd-kit/core';
 import {
@@ -68,7 +65,6 @@ interface HomepageSettingsFormData {
 }
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -106,8 +102,8 @@ const AdminDashboard = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
+    useSensors(PointerSensor),
+    useSensors(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
@@ -176,27 +172,11 @@ const AdminDashboard = () => {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'confirmed': return 'bg-blue-100 text-blue-800';
       case 'preparing': return 'bg-orange-100 text-orange-800';
-      case 'out_for_delivery': return 'bg-green-100 text-green-800';
+      case 'ready': return 'bg-green-100 text-green-800';
       case 'delivered': return 'bg-gray-100 text-gray-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const getStatusDisplayName = (status: string) => {
-    switch (status) {
-      case 'pending': return 'Pending';
-      case 'confirmed': return 'Confirmed';
-      case 'preparing': return 'Preparing';
-      case 'out_for_delivery': return 'Ready';
-      case 'delivered': return 'Delivered';
-      case 'cancelled': return 'Cancelled';
-      default: return status;
-    }
-  };
-
-  const goToHomepage = () => {
-    navigate('/');
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: Order['status']) => {
@@ -205,7 +185,6 @@ const AdminDashboard = () => {
       await fetchOrders();
     } catch (error) {
       console.error('Error updating order status:', error);
-      alert(`Failed to update order status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -540,17 +519,10 @@ const AdminDashboard = () => {
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
+            <div className="flex">
               <div className="flex-shrink-0 flex items-center">
                 <h1 className="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
               </div>
-              <button
-                onClick={goToHomepage}
-                className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center transition-colors duration-200"
-              >
-                <Home className="h-4 w-4 mr-2" />
-                View Homepage
-              </button>
             </div>
           </div>
         </div>
@@ -1088,7 +1060,7 @@ const AdminDashboard = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(order.status)}`}>
-                      {getStatusDisplayName(order.status)}
+                      {order.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -1103,7 +1075,7 @@ const AdminDashboard = () => {
                       <option value="pending">Pending</option>
                       <option value="confirmed">Confirmed</option>
                       <option value="preparing">Preparing</option>
-                      <option value="out_for_delivery">Ready</option>
+                      <option value="ready">Ready</option>
                       <option value="delivered">Delivered</option>
                       <option value="cancelled">Cancelled</option>
                     </select>
@@ -1195,4 +1167,4 @@ const AdminDashboard = () => {
   }
 };
 
-export default AdminDashboard;
+export default AdminDashboard; 

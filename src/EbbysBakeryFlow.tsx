@@ -1,9 +1,15 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
-import { Home, ShoppingCart, Plus, Minus, Search, Instagram, Phone, Clock, MapPin, X, Check, Truck, ArrowRight, ArrowLeft, Settings } from 'lucide-react';
+import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import { Home, ShoppingCart, Plus, Minus, Search, Instagram, Phone, Clock, MapPin, X, Check, Truck, ArrowRight, ArrowLeft, Settings, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import AdminDashboard from './AdminDashboard';
 import TestSupabase from './test-supabase';
-import { productService, homepageSettingsService } from './services/database';
+import TestPincode from './test-pincode';
+import TestPincodeSimple from './test-pincode-simple';
+import { productService, homepageSettingsService, orderService } from './services/database';
+import { emailService } from './services/email';
 import { supabase } from './lib/supabase';
+import { PincodeInput } from './components/PincodeInput';
+import { PincodeValidationResult } from './services/pincode';
 
 // --- src/types/index.ts ---
 
@@ -151,7 +157,7 @@ type AppContextType = {
   updateCartQuantity: (productId: number, quantity: number) => void;
   removeFromCart: (productId: number) => void;
   setCustomerInfo: React.Dispatch<React.SetStateAction<CustomerInfo>>;
-  placeOrder: (customerData: CustomerInfo, validationRules: (data: CustomerInfo) => ValidationErrors) => boolean;
+  placeOrder: (customerData: CustomerInfo, validationRules: (data: CustomerInfo) => ValidationErrors) => Promise<boolean>;
   resetApp: () => void;
   refreshProducts: () => Promise<void>;
   refreshHomepageSettings: () => Promise<void>;
@@ -252,12 +258,16 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   }, []);
 
   const addToCart = (product: Product, quantity: number) => {
+    console.log('addToCart called with:', product.name, 'quantity:', quantity);
     if (quantity <= 0) return;
     setCart(prevCart => {
+      console.log('Previous cart:', prevCart);
       const existingItem = prevCart.find(item => item.id === product.id);
       if (existingItem) {
+        console.log('Updating existing item:', existingItem.name, 'new quantity:', existingItem.quantity + quantity);
         return prevCart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item);
       }
+      console.log('Adding new item:', product.name, 'quantity:', quantity);
       return [...prevCart, { ...product, quantity }];
     });
   };
@@ -274,18 +284,88 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     setCart(prevCart => prevCart.filter(item => item.id !== productId));
   };
 
-  const placeOrder = (customerData: CustomerInfo, validationRules: (data: CustomerInfo) => ValidationErrors) => {
+  const placeOrder = async (customerData: CustomerInfo, validationRules: (data: CustomerInfo) => ValidationErrors) => {
     const errors = validationRules(customerData);
     if (Object.keys(errors).length > 0) {
       // In a real app, you'd set an error state here for the form to display
       console.error("Validation failed", errors);
       return false;
     }
-    setCustomerInfo(customerData);
-    setOrderNumber(`EB${Date.now().toString().slice(-6)}`);
-    setCurrentPage('confirmation');
-    setCart([]);
-    return true;
+
+    try {
+      // Generate order number
+      const orderNumber = `EB${Date.now().toString().slice(-6)}`;
+      
+      // Prepare order data
+      const orderData = {
+        order_number: orderNumber,
+        customer_name: customerData.name,
+        customer_phone: customerData.phone,
+        customer_address: customerData.address,
+        customer_pincode: customerData.pincode,
+        items: cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          weight: item.weight
+        })),
+        total: total,
+        status: 'pending' as const,
+        payment_status: 'pending' as const,
+        order_date: new Date().toISOString().split('T')[0]
+      };
+
+      // Create order in database
+      console.log('Creating order in database:', orderData);
+      const createdOrder = await orderService.create(orderData);
+      console.log('Order created successfully:', createdOrder);
+
+      // Send email notification to admin
+      try {
+        const adminEmail = await emailService.getAdminEmail();
+        if (adminEmail) {
+          const emailData = {
+            orderNumber: orderNumber,
+            customerName: customerData.name,
+            customerPhone: customerData.phone,
+            customerAddress: customerData.address,
+            customerPincode: customerData.pincode,
+            items: cart.map(item => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price
+            })),
+            total: total,
+            orderDate: new Date().toLocaleDateString('en-IN')
+          };
+
+          const emailResult = await emailService.sendNewOrderNotification(emailData, adminEmail);
+          if (emailResult.success) {
+            console.log('Email notification sent successfully');
+          } else {
+            console.warn('Failed to send email notification:', emailResult.error);
+          }
+        } else {
+          console.warn('No admin email found for notifications');
+        }
+      } catch (emailError) {
+        console.error('Error sending email notification:', emailError);
+        // Don't fail the order creation if email fails
+      }
+
+      // Update local state
+      setCustomerInfo(customerData);
+      setOrderNumber(orderNumber);
+      setCurrentPage('confirmation');
+      setCart([]);
+      
+      return true;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Failed to place order. Please try again.');
+      return false;
+    }
   };
   
   const resetApp = () => {
@@ -396,25 +476,18 @@ const Homepage = () => {
   }, [products]);
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
   const [pincode, setPincode] = useState("");
-  const [pincodeStatus, setPincodeStatus] = useState("idle"); // "idle", "checking", "serviceable", "not-serviceable"
+  const [pincodeValidation, setPincodeValidation] = useState<PincodeValidationResult | null>(null);
   const [showMiniCart, setShowMiniCart] = useState(false);
   const { cart } = useAppContext();
   
-  const checkDelivery = () => {
-    if (!pincode) return;
-    setPincodeStatus("checking");
-    setTimeout(() => {
-      if (serviceablePincodes.includes(pincode)) {
-        setPincodeStatus("serviceable");
-      } else {
-        setPincodeStatus("not-serviceable");
-      }
-    }, 1000);
-  };
+  const handlePincodeValidationChange = useCallback((result: PincodeValidationResult) => {
+    setPincodeValidation(result);
+  }, []);
 
   const handleAddToCart = (product: Product, quantity: number) => {
+    console.log('Adding to cart:', product.name, 'quantity:', quantity);
     addToCart(product, quantity);
-    setQuantities(prev => ({ ...prev, [product.id]: 0 }));
+    // Keep the quantity selected by user - don't reset to 0
   };
 
   const updateQuantity = (productId: number, quantity: number) => {
@@ -432,15 +505,26 @@ const Homepage = () => {
               </div>
               <div className="flex items-center space-x-4">
                 <div className="hidden sm:flex items-center space-x-2">
-                  <Input placeholder="Enter pincode" value={pincode} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setPincode(e.target.value); setPincodeStatus("idle"); }} className="w-32 text-sm" maxLength={6} />
-                  <Button variant="ghost" size="sm" onClick={checkDelivery} disabled={pincodeStatus === "checking"}>
-                    {pincodeStatus === "checking" ? <div className="animate-spin h-4 w-4 border-2 border-orange-600 border-t-transparent rounded-full" /> : <Search className="h-4 w-4" />}
-                  </Button>
+                  <PincodeInput
+                    value={pincode}
+                    onChange={setPincode}
+                    onValidationChange={handlePincodeValidationChange}
+                    placeholder="Enter pincode"
+                    className="w-48"
+                    showValidationMessage={false}
+                  />
                 </div>
                 <div className="relative"><Button variant="ghost" size="sm" onClick={() => setShowMiniCart(!showMiniCart)}><ShoppingCart className="h-5 w-5" />{cartItemCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-orange-600 text-white">{cartItemCount}</Badge>}</Button></div>
-                <Button variant="ghost" size="sm" onClick={() => setCurrentPage('admin')}><Settings className="h-5 w-5" /></Button>
+                <Link to="/admin">
+                  <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Admin
+                  </Button>
+                </Link>
                 <Button variant="ghost" size="sm" onClick={() => setCurrentPage('test')} className="text-green-600">Test DB</Button>
                 <Button variant="ghost" size="sm" onClick={() => setCurrentPage('storage')} className="text-blue-600">Test Storage</Button>
+                <Button variant="ghost" size="sm" onClick={() => setCurrentPage('pincode')} className="text-purple-600">Test Pincode</Button>
+                <Button variant="ghost" size="sm" onClick={() => setCurrentPage('pincode-simple')} className="text-indigo-600">Simple Test</Button>
                 <Button variant="ghost" size="sm" onClick={refreshProducts} className="text-purple-600">Refresh Products</Button>
                 <Button variant="ghost" size="sm" onClick={async () => {
                   try {
@@ -454,8 +538,16 @@ const Homepage = () => {
                 }} className="text-orange-600">Debug Products</Button>
               </div>
             </div>
-            {pincodeStatus === "serviceable" && <div className="mt-2 p-2 bg-green-100 border border-green-300 rounded-md text-green-800 text-sm">✅ Great! We deliver to {pincode}. Orders placed by Sunday 11:59 PM will be delivered from Wednesday.</div>}
-            {pincodeStatus === "not-serviceable" && <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded-md text-red-800 text-sm">❌ Sorry, we don't deliver to {pincode} yet. We're expanding soon!</div>}
+            {pincodeValidation && pincodeValidation.isValid && pincodeValidation.isServiceable && (
+              <div className="mt-2 p-2 bg-green-100 border border-green-300 rounded-md text-green-800 text-sm">
+                ✅ {pincodeValidation.message}
+              </div>
+            )}
+            {pincodeValidation && pincodeValidation.isValid && !pincodeValidation.isServiceable && (
+              <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-md text-yellow-800 text-sm">
+                ⚠️ {pincodeValidation.message}
+              </div>
+            )}
           </div>
         </header>
 
@@ -517,13 +609,13 @@ const Homepage = () => {
                     </div>
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center border border-orange-200 rounded-full h-10">
-                        <Button variant="ghost" size="sm" onClick={() => updateQuantity(product.id, (quantities[product.id] || 0) - 1)} className="rounded-full w-8 h-8 p-0 flex items-center justify-center" disabled={!quantities[product.id] || quantities[product.id] <= 0}><Minus className="h-3 w-3" /></Button>
-                        <span className="px-4 py-2 text-center min-w-[3rem] flex items-center justify-center h-full">{quantities[product.id] || 0}</span>
-                        <Button variant="ghost" size="sm" onClick={() => updateQuantity(product.id, (quantities[product.id] || 0) + 1)} className="rounded-full w-8 h-8 p-0 flex items-center justify-center"><Plus className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => updateQuantity(product.id, (quantities[product.id] || 0) - 1)} className="rounded-full w-10 h-10 p-0 flex items-center justify-center text-orange-600 hover:bg-orange-50" disabled={!quantities[product.id] || quantities[product.id] <= 0}><Minus className="h-5 w-5" /></Button>
+                        <span className="px-4 py-2 text-center min-w-[3rem] flex items-center justify-center h-full font-medium text-gray-800">{quantities[product.id] || 0}</span>
+                        <Button variant="ghost" size="sm" onClick={() => updateQuantity(product.id, (quantities[product.id] || 0) + 1)} className="rounded-full w-10 h-10 p-0 flex items-center justify-center text-orange-600 hover:bg-orange-50"><Plus className="h-5 w-5" /></Button>
                       </div>
-                      <Button onClick={() => handleAddToCart(product, quantities[product.id] || 1)} className="flex-1 h-10 rounded-full shadow-md hover:shadow-lg transition-all duration-200" disabled={pincodeStatus !== "serviceable"}>Add to Cart</Button>
+                      <Button onClick={() => handleAddToCart(product, quantities[product.id] || 1)} className="flex-1 h-10 rounded-full shadow-md hover:shadow-lg transition-all duration-200" disabled={!pincodeValidation?.isServiceable}>Add to Cart</Button>
                     </div>
-                    {pincodeStatus !== "serviceable" && <p className="text-xs text-gray-500 text-center mt-2">Check delivery availability first</p>}
+                    {!pincodeValidation?.isServiceable && <p className="text-xs text-gray-500 text-center mt-2">Check delivery availability first</p>}
                   </CardContent>
                 </Card>
               ))}
@@ -559,11 +651,32 @@ const Homepage = () => {
                       <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded" />
                       <div className="flex-1"><h4 className="font-medium text-gray-800 text-sm">{item.name}</h4><p className="text-gray-600 text-xs">₹{item.price} × {item.quantity}</p></div>
                       <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => updateCartQuantity(item.id, item.quantity - 1)} className="w-6 h-6 p-0"><Minus className="h-3 w-3" /></Button>
-                        <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
-                        <Button variant="ghost" size="sm" onClick={() => updateCartQuantity(item.id, item.quantity + 1)} className="w-6 h-6 p-0"><Plus className="h-3 w-3" /></Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => updateCartQuantity(item.id, item.quantity - 1)} 
+                          className="w-8 h-8 p-0 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm font-medium w-8 text-center text-gray-800">{item.quantity}</span>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => updateCartQuantity(item.id, item.quantity + 1)} 
+                          className="w-8 h-8 p-0 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => removeFromCart(item.id)} className="text-red-500 hover:text-red-700 w-6 h-6 p-0"><X className="h-3 w-3" /></Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => removeFromCart(item.id)} 
+                        className="w-8 h-8 p-0 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -599,10 +712,31 @@ const CheckoutPage = () => {
                       <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
                       <div className="flex-1"><h3 className="font-medium text-gray-800">{item.name}</h3><p className="text-gray-600 text-sm">{item.weight}</p><p className="text-orange-600 font-medium">₹{item.price} × {item.quantity}</p></div>
                       <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => updateCartQuantity(item.id, item.quantity - 1)} className="w-8 h-8 p-0"><Minus className="h-4 w-4" /></Button>
-                        <span className="font-medium w-8 text-center">{item.quantity}</span>
-                        <Button variant="ghost" size="sm" onClick={() => updateCartQuantity(item.id, item.quantity + 1)} className="w-8 h-8 p-0"><Plus className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => removeFromCart(item.id)} className="text-red-500 hover:text-red-700 w-8 h-8 p-0 ml-2"><X className="h-4 w-4" /></Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => updateCartQuantity(item.id, item.quantity - 1)} 
+                          className="w-10 h-10 p-0 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                        >
+                          <Minus className="h-5 w-5" />
+                        </Button>
+                        <span className="font-medium w-10 text-center text-gray-800 text-lg">{item.quantity}</span>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => updateCartQuantity(item.id, item.quantity + 1)} 
+                          className="w-10 h-10 p-0 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                        >
+                          <Plus className="h-5 w-5" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => removeFromCart(item.id)} 
+                          className="w-10 h-10 p-0 ml-2 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -648,9 +782,9 @@ const AccountPage = () => {
 
   const { values, setValues, errors, handleChange, validate } = useFormValidation(customerInfo, validationRules);
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (validate()) {
-      placeOrder(values, validationRules);
+      await placeOrder(values, validationRules);
     }
   };
 
@@ -668,7 +802,16 @@ const AccountPage = () => {
                         </div>
                         <div><Label htmlFor="address">Complete Address *</Label><Input id="address" placeholder="House no, Street, Area, City" value={values.address} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('address', e.target.value)} className={errors.address ? 'border-red-500' : ''} />{errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}</div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><Label htmlFor="pincode">Pincode *</Label><Input id="pincode" placeholder="110001" value={values.pincode} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('pincode', e.target.value)} maxLength={6} className={errors.pincode ? 'border-red-500' : ''} />{errors.pincode && <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>}</div>
+                            <div>
+                              <Label htmlFor="pincode">Pincode *</Label>
+                              <PincodeInput
+                                value={values.pincode}
+                                onChange={(value) => handleChange('pincode', value)}
+                                placeholder="110001"
+                                className={errors.pincode ? 'border-red-500' : ''}
+                              />
+                              {errors.pincode && <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>}
+                            </div>
                             <div><Label htmlFor="addressType">Address Type</Label><Select value={values.addressType} onValueChange={(value) => handleChange('addressType', value)}><SelectItem value="Home">Home</SelectItem><SelectItem value="Office">Office</SelectItem><SelectItem value="Other">Other</SelectItem></Select></div>
                         </div>
                         <Button onClick={handlePlaceOrder} className="w-full bg-orange-600 hover:bg-orange-700" size="lg">Place Order - ₹{total} (COD)<Check className="h-4 w-4 ml-2" /></Button>
@@ -713,7 +856,9 @@ const PageRenderer = () => {
         case 'confirmation': return <ConfirmationPage />;
         case 'admin': return <AdminDashboard />;
         case 'test': return <TestSupabase />;
-              case 'storage': return <TestSupabase />;
+        case 'storage': return <TestSupabase />;
+        case 'pincode': return <TestPincode />;
+        case 'pincode-simple': return <TestPincodeSimple />;
         default: return <Homepage />;
     }
 };
