@@ -43,6 +43,7 @@ type Product = {
   price: number;
   weight: string;
   image: string;
+  stock: number;
   isBestseller?: boolean;
   isNew?: boolean;
   description: string;
@@ -143,12 +144,12 @@ const SelectItem = ({ children, value }: SelectItemProps) => <option value={valu
 
 // --- src/data/bakery-data.ts ---
 const initialProducts: Product[] = [
-    { id: 1, name: "100% Wholewheat Sourdough", price: 250, weight: "500g", image: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=400&h=300&fit=crop", isBestseller: true, description: "Our signature whole wheat sourdough with a perfect crust and soft interior." },
-    { id: 2, name: "Multiseed Sourdough", price: 280, weight: "500g", image: "https://images.unsplash.com/photo-1585478259715-876acc5be8eb?w=400&h=300&fit=crop", description: "Packed with sunflower seeds, pumpkin seeds, and sesame for extra nutrition." },
-    { id: 3, name: "Artisan Baguette", price: 180, weight: "300g", image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=300&fit=crop", description: "Traditional French baguette with crispy crust and airy crumb." },
-    { id: 4, name: "Sourdough Focaccia", price: 320, weight: "400g", image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=300&fit=crop", description: "Italian-style focaccia with herbs and olive oil, soft and flavorful." },
-    { id: 5, name: "Rye Sesame Crackers", price: 180, weight: "200g", image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400&h=300&fit=crop", isNew: true, description: "Crispy rye crackers topped with sesame seeds, perfect for cheese platters." },
-    { id: 6, name: "Cinnamon Swirl Bread", price: 320, weight: "450g", image: "https://images.unsplash.com/photo-1586444248902-2f64eddc13df?w=400&h=300&fit=crop", description: "Sweet sourdough bread with cinnamon swirl, perfect for breakfast toast." }
+    { id: 1, name: "100% Wholewheat Sourdough", price: 250, weight: "500g", image: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=400&h=300&fit=crop", stock: 10, isBestseller: true, description: "Our signature whole wheat sourdough with a perfect crust and soft interior." },
+    { id: 2, name: "Multiseed Sourdough", price: 280, weight: "500g", image: "https://images.unsplash.com/photo-1585478259715-876acc5be8eb?w=400&h=300&fit=crop", stock: 8, description: "Packed with sunflower seeds, pumpkin seeds, and sesame for extra nutrition." },
+    { id: 3, name: "Artisan Baguette", price: 180, weight: "300g", image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=300&fit=crop", stock: 15, description: "Traditional French baguette with crispy crust and airy crumb." },
+    { id: 4, name: "Sourdough Focaccia", price: 320, weight: "400g", image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=300&fit=crop", stock: 5, description: "Italian-style focaccia with herbs and olive oil, soft and flavorful." },
+    { id: 5, name: "Rye Sesame Crackers", price: 180, weight: "200g", image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=400&h=300&fit=crop", stock: 0, isNew: true, description: "Crispy rye crackers topped with sesame seeds, perfect for cheese platters." },
+    { id: 6, name: "Cinnamon Swirl Bread", price: 320, weight: "450g", image: "https://images.unsplash.com/photo-1586444248902-2f64eddc13df?w=400&h=300&fit=crop", stock: 12, description: "Sweet sourdough bread with cinnamon swirl, perfect for breakfast toast." }
 ];
 const initialServiceablePincodes: string[] = ["110001", "110002", "110003", "110016", "110017", "110019", "110021", "110024", "110025", "110027", "110029", "110030", "122018"];
 
@@ -235,7 +236,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
           image: product.image_url || '',
           description: product.description,
           isBestseller: product.is_bestseller,
-          isNew: product.is_new
+          isNew: product.is_new,
+          stock: product.stock || 0 // Assuming stock is available in the product object
         }));
         console.log('Initial mapped products:', mappedProducts);
         setProducts(mappedProducts);
@@ -427,7 +429,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         image: product.image_url || '',
         description: product.description,
         isBestseller: product.is_bestseller,
-        isNew: product.is_new
+        isNew: product.is_new,
+        stock: product.stock || 0 // Assuming stock is available in the product object
       }));
       console.log('Mapped products:', mappedProducts);
       // Force a new array reference to ensure React detects the change
@@ -656,6 +659,14 @@ const Homepage = () => {
                 <Card key={product.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
                   <div className="relative overflow-hidden">
                     <img src={product.image} alt={product.name} className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300" />
+                    {/* SOLD OUT Overlay */}
+                    {product.stock === 0 && (
+                      <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                        <div className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-lg shadow-lg">
+                          SOLD OUT
+                        </div>
+                      </div>
+                    )}
                     <div className="absolute top-3 left-3 flex flex-col space-y-2">
                         {product.isBestseller && <Badge className="bg-orange-600 text-white rounded-full px-3 py-1 shadow-md">⭐ Bestseller</Badge>}
                         {product.isNew && <Badge className="bg-green-600 text-white rounded-full px-3 py-1 shadow-md">New</Badge>}
@@ -667,7 +678,13 @@ const Homepage = () => {
                       <div className="h-12 flex items-center justify-center">
                         <p className="text-gray-600 text-sm line-clamp-2">{product.description}</p>
                       </div>
-                      <div className="flex items-center justify-center space-x-4"><p className="text-2xl font-bold text-orange-600">₹{product.price}</p><p className="text-gray-500 text-sm">({product.weight})</p></div>
+                      <div className="flex items-center justify-center space-x-4">
+                        <p className="text-2xl font-bold text-orange-600">₹{product.price}</p>
+                        <p className="text-gray-500 text-sm">({product.weight})</p>
+                      </div>
+                      {product.stock === 0 && (
+                        <p className="text-red-600 text-sm font-medium">Out of Stock</p>
+                      )}
                     </div>
                     <div className="flex items-center justify-center">
                       <div className="flex items-center border border-orange-200 rounded-full h-10">
@@ -688,13 +705,14 @@ const Homepage = () => {
                           size="sm" 
                           onClick={() => updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) + 1)} 
                           className="rounded-full w-10 h-10 p-0 flex items-center justify-center text-orange-600 hover:bg-orange-50"
-                          disabled={!pincodeValidation?.isServiceable}
+                          disabled={!pincodeValidation?.isServiceable || product.stock === 0}
                         >
                           <Plus className="h-5 w-5" />
                         </Button>
                       </div>
                     </div>
                     {!pincodeValidation?.isServiceable && <p className="text-xs text-gray-500 text-center mt-2">Check delivery availability first</p>}
+                    {product.stock === 0 && <p className="text-xs text-red-500 text-center mt-2">This item is currently out of stock</p>}
                   </CardContent>
                 </Card>
               ))}
@@ -918,7 +936,7 @@ const ConfirmationPage = () => {
           <div className="text-center mb-8"><div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4"><Check className="h-8 w-8 text-green-600" /></div><h2 className="text-3xl font-bold text-gray-800 mb-2">Thank You!</h2><p className="text-gray-600">Your order has been placed successfully</p></div>
           <Card className="mb-6"><CardHeader><CardTitle>Order Details</CardTitle></CardHeader><CardContent><div className="space-y-3"><div className="flex justify-between"><span className="text-gray-600">Order Number</span><span className="font-bold text-orange-600">{orderNumber}</span></div><div className="flex justify-between"><span className="text-gray-600">Total Amount</span><span className="font-bold">₹{orderTotal}</span></div><div className="flex justify-between"><span className="text-gray-600">Payment Method</span><span className="font-medium">Cash on Delivery</span></div></div></CardContent></Card>
           <Card className="mb-6"><CardHeader><CardTitle>Delivery Information</CardTitle></CardHeader><CardContent><div className="space-y-3"><div><span className="text-gray-600 block">Delivery Address</span><span className="font-medium">{customerInfo.address}, {customerInfo.pincode}</span></div><div><span className="text-gray-600 block">Expected Delivery</span><span className="font-medium text-green-600">Wednesday - Friday</span></div></div></CardContent></Card>
-          <Card className="mb-6"><CardHeader><CardTitle>Customer Support</CardTitle></CardHeader><CardContent><div className="space-y-4"><div className="flex items-center space-x-3"><Phone className="h-5 w-5 text-orange-600" /><div><span className="text-gray-600 block text-sm">Phone Support</span><span className="font-medium">+91 98765 43210</span></div></div><div className="flex items-center space-x-3"><Clock className="h-5 w-5 text-orange-600" /><div><span className="text-gray-600 block text-sm">Support Hours</span><span className="font-medium">Monday - Saturday: 9:00 AM - 7:00 PM</span></div></div><div className="flex items-center space-x-3"><Instagram className="h-5 w-5 text-orange-600" /><div><span className="text-gray-600 block text-sm">Follow Us</span><span className="font-medium">@ebbysbreads</span></div></div><div className="pt-3 border-t border-gray-200"><p className="text-sm text-gray-600">Need help with your order? Contact us anytime during business hours. We're here to help!</p></div></div></CardContent></Card>
+          <Card className="mb-6"><CardHeader><CardTitle>Customer Support</CardTitle></CardHeader><CardContent><div className="space-y-4"><div className="flex items-center space-x-3"><Phone className="h-5 w-5 text-orange-600" /><div><span className="text-gray-600 block text-sm">Phone Support</span><span className="font-medium">+91 98765 43210</span></div></div><div className="flex items-center space-x-3"><Clock className="h-5 w-5 text-orange-600" /><div><span className="text-gray-600 block text-sm">Support Hours</span><span className="font-medium">Monday - Saturday: 9:00 AM - 7:00 PM</span></div></div><div className="flex items-center space-x-3"><Mail className="h-5 w-5 text-orange-600" /><div><span className="text-gray-600 block text-sm">Follow Us</span><span className="font-medium">@ebbysbreads</span></div></div><div className="pt-3 border-t border-gray-200"><p className="text-sm text-gray-600">Need help with your order? Contact us anytime during business hours. We're here to help!</p></div></div></CardContent></Card>
           <div className="text-center mt-8"><Button onClick={resetApp} variant="outline" className="px-8">Continue Shopping</Button></div>
         </div>
       </div>
