@@ -10,7 +10,7 @@ const OAuthDebugger: React.FC = () => {
     redirectUrl: ''
   });
 
-  const [copied, setCopied] = useState<string | null>(null);
+
 
   useEffect(() => {
     const currentUrl = window.location.href;
@@ -32,8 +32,6 @@ const OAuthDebugger: React.FC = () => {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    setCopied(text);
-    setTimeout(() => setCopied(null), 2000);
   };
 
   const testOAuthRedirect = () => {
