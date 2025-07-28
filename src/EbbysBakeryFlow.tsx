@@ -883,6 +883,11 @@ const AccountPage = () => {
     console.log('🔍 Form values:', values);
     console.log('🔍 Cart items:', cart);
     console.log('🔍 Total amount:', total);
+    console.log('🔍 Serviceable pincodes:', serviceablePincodes);
+    
+    // Check validation manually to see what's failing
+    const validationErrors = validationRules(values);
+    console.log('🔍 Validation errors:', validationErrors);
     
     if (validate()) {
       console.log('🔍 Validation passed, calling placeOrder');
@@ -894,6 +899,7 @@ const AccountPage = () => {
       }
     } else {
       console.log('🔍 Validation failed');
+      console.log('🔍 Current errors state:', errors);
     }
   };
 
