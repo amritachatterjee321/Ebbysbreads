@@ -1027,6 +1027,8 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+
     </div>
   );
 
@@ -1994,14 +1996,15 @@ const AdminDashboard = () => {
       )}
 
       {/* Order Details Modal */}
-      {/* @ts-ignore */}
       {showOrderDetailsModal && selectedOrder && (() => {
-        const order = selectedOrder;
+        // Type guard to ensure selectedOrder is not null
+        if (!selectedOrder) return null;
+        
         return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Order Details - {order.order_number}</h3>
+              <h3 className="text-lg font-medium text-gray-900">Order Details - {selectedOrder.order_number}</h3>
               <button
                 onClick={() => {
                   setShowOrderDetailsModal(false);
@@ -2018,21 +2021,21 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Order Number</label>
-                  <p className="mt-1 text-sm text-gray-900 font-medium">{order.order_number}</p>
+                  <p className="mt-1 text-sm text-gray-900 font-medium">{selectedOrder.order_number}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Order Date</label>
-                  <p className="mt-1 text-sm text-gray-900">{new Date(selectedOrder!.order_date).toLocaleDateString()}</p>
+                  <p className="mt-1 text-sm text-gray-900">{new Date(selectedOrder.order_date).toLocaleDateString()}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Delivery Date</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedOrder!.delivery_date ? new Date(selectedOrder!.delivery_date).toLocaleDateString() : 'Not set'}</p>
+                  <p className="mt-1 text-sm text-gray-900">{selectedOrder.delivery_date ? new Date(selectedOrder.delivery_date).toLocaleDateString() : 'Not set'}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Status</label>
                   <p className="mt-1">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedOrder!.status)}`}>
-                      {getStatusDisplayName(selectedOrder!.status)}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
+                      {getStatusDisplayName(selectedOrder.status)}
                     </span>
                   </p>
                 </div>
@@ -2040,15 +2043,15 @@ const AdminDashboard = () => {
                   <label className="block text-sm font-medium text-gray-700">Payment Status</label>
                   <p className="mt-1">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      order.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      selectedOrder.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {order.payment_status === 'paid' ? 'Paid' : 'Pending'}
+                      {selectedOrder.payment_status === 'paid' ? 'Paid' : 'Pending'}
                     </span>
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Total Amount</label>
-                  <p className="mt-1 text-sm text-gray-900 font-semibold">₹{order.total}</p>
+                  <p className="mt-1 text-sm text-gray-900 font-semibold">₹{selectedOrder.total}</p>
                 </div>
               </div>
 
@@ -2058,11 +2061,11 @@ const AdminDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{order.customer_name}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_name}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <p className="mt-1 text-sm text-gray-900">{order.customer_phone}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_phone}</p>
                   </div>
                   {selectedOrder.customer_email && (
                     <div>
@@ -2134,7 +2137,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-      )})}
+      )}
     </div>
   );
 };
