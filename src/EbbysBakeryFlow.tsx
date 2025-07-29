@@ -1022,7 +1022,6 @@ const CheckoutPage = () => {
 const AccountPage = () => {
   const { total, setCurrentPage, placeOrder, customerInfo, serviceablePincodes, cart } = useAppContext();
   const [existingCustomerFound, setExistingCustomerFound] = useState(false);
-  const [phoneNumberLocked, setPhoneNumberLocked] = useState(false);
 
   const validationRules = (values: CustomerInfo): ValidationErrors => {
     const errors: ValidationErrors = {};
@@ -1055,22 +1054,17 @@ const AccountPage = () => {
           pincode: existingCustomer.pincode
         });
         
-        // Show success message and lock phone number ONLY if we have exactly 10 digits
-        if (phone.length === 10) {
-          setExistingCustomerFound(true);
-          setPhoneNumberLocked(true);
-          
-          // Clear the success message after 5 seconds
-          setTimeout(() => setExistingCustomerFound(false), 5000);
-        }
+        // Show success message for existing customer
+        setExistingCustomerFound(true);
+        
+        // Clear the success message after 5 seconds
+        setTimeout(() => setExistingCustomerFound(false), 5000);
       } else {
         setExistingCustomerFound(false);
-        setPhoneNumberLocked(false);
       }
     } catch (error) {
       console.error('Error checking existing customer:', error);
       setExistingCustomerFound(false);
-      setPhoneNumberLocked(false);
     }
   };
 
@@ -1080,9 +1074,8 @@ const AccountPage = () => {
     
     // If phone number is being entered, only check for existing customer when exactly 10 digits
     if (field === 'phone') {
-      // Always reset states when phone number changes and is not exactly 10 digits
+      // Reset existing customer status when phone number changes
       if (value.length !== 10) {
-        setPhoneNumberLocked(false);
         setExistingCustomerFound(false);
         return; // Exit early, don't check for existing customer
       }
@@ -1147,41 +1140,25 @@ const AccountPage = () => {
                                 value={values.phone} 
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('phone', e.target.value)} 
                                 maxLength={10} 
-                                className={`${errors.phone ? 'border-red-500' : ''} ${phoneNumberLocked ? 'bg-gray-100' : ''}`} 
+                                className={`${errors.phone ? 'border-red-500' : ''}`} 
                               />
                               {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
-                              {!errors.phone && !phoneNumberLocked && values.phone.length > 0 && values.phone.length < 10 && (
+                              {!errors.phone && values.phone.length > 0 && values.phone.length < 10 && (
                                 <p className="text-orange-600 text-xs mt-1">📱 Please enter a complete 10-digit phone number</p>
-                              )}
-                              {phoneNumberLocked && (
-                                <div className="mt-2">
-                                  <p className="text-blue-600 text-xs">🔒 Phone number locked for existing customer</p>
-                                  <button 
-                                    type="button"
-                                    onClick={() => {
-                                      setPhoneNumberLocked(false);
-                                      setExistingCustomerFound(false);
-                                    }}
-                                    className="text-xs text-orange-600 underline hover:text-orange-700"
-                                  >
-                                    Unlock phone number
-                                  </button>
-                                </div>
                               )}
                               {/* Debug info - remove in production */}
                               <div className="mt-1 text-xs text-gray-400">
-                                Debug: Phone length: {values.phone.length}, Locked: {phoneNumberLocked.toString()}, Existing: {existingCustomerFound.toString()}
+                                Debug: Phone length: {values.phone.length}, Existing: {existingCustomerFound.toString()}
                               </div>
                               <button 
                                 type="button"
                                 onClick={() => {
                                   console.log('🔍 Manual reset clicked');
-                                  setPhoneNumberLocked(false);
                                   setExistingCustomerFound(false);
                                 }}
                                 className="text-xs text-blue-600 underline"
                               >
-                                Reset Phone State (Debug)
+                                Reset Customer State (Debug)
                               </button>
                             </div>
                         </div>
