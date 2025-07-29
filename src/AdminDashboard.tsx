@@ -111,6 +111,8 @@ const AdminDashboard = () => {
   const [customerSearchTerm, setCustomerSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
 
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -567,6 +569,11 @@ const AdminDashboard = () => {
   const selectCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     fetchCustomerOrders(customer.phone);
+  };
+
+  const showOrderDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setShowOrderDetailsModal(true);
   };
 
   const filteredCustomers = customers.filter(customer =>
@@ -1485,16 +1492,19 @@ const AdminDashboard = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Status
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
+
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {customerOrders.map((order) => (
                             <tr key={order.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {order.order_number}
+                                <button
+                                  onClick={() => showOrderDetails(order)}
+                                  className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                                >
+                                  {order.order_number}
+                                </button>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {new Date(order.order_date).toLocaleDateString()}
@@ -1516,20 +1526,7 @@ const AdminDashboard = () => {
                                   {getStatusDisplayName(order.status)}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <select
-                                  value={order.status}
-                                  onChange={(e) => updateOrderStatus(order.id, e.target.value as Order['status'])}
-                                  className="text-xs border border-gray-300 rounded px-2 py-1"
-                                >
-                                  <option value="pending">Pending</option>
-                                  <option value="confirmed">Confirmed</option>
-                                  <option value="preparing">Preparing</option>
-                                  <option value="out_for_delivery">Ready</option>
-                                  <option value="delivered">Delivered</option>
-                                  <option value="cancelled">Cancelled</option>
-                                </select>
-                              </td>
+
                             </tr>
                           ))}
                         </tbody>
@@ -1991,6 +1988,146 @@ const AdminDashboard = () => {
                 </button>
               </div>
             </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Details Modal */}
+      {showOrderDetailsModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Order Details - {selectedOrder!.order_number}</h3>
+              <button
+                onClick={() => {
+                  setShowOrderDetailsModal(false);
+                  setSelectedOrder(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Order Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Order Number</label>
+                  <p className="mt-1 text-sm text-gray-900 font-medium">{selectedOrder!.order_number}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Order Date</label>
+                  <p className="mt-1 text-sm text-gray-900">{new Date(selectedOrder.order_date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Delivery Date</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedOrder.delivery_date ? new Date(selectedOrder.delivery_date).toLocaleDateString() : 'Not set'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <p className="mt-1">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
+                      {getStatusDisplayName(selectedOrder.status)}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Payment Status</label>
+                  <p className="mt-1">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      selectedOrder.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {selectedOrder.payment_status === 'paid' ? 'Paid' : 'Pending'}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Total Amount</label>
+                  <p className="mt-1 text-sm text-gray-900 font-semibold">₹{selectedOrder.total}</p>
+                </div>
+              </div>
+
+              {/* Customer Information */}
+              <div className="border-t pt-4">
+                <h4 className="text-md font-medium text-gray-900 mb-3">Customer Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Name</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_phone}</p>
+                  </div>
+                  {selectedOrder.customer_email && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Email</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_email}</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Address</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_address}, {selectedOrder.customer_pincode}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="border-t pt-4">
+                <h4 className="text-md font-medium text-gray-900 mb-3">Order Items</h4>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  {Array.isArray(selectedOrder.items) ? (
+                    <div className="space-y-3">
+                      {selectedOrder.items.map((item: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                          <div>
+                            <p className="font-medium text-gray-900">{item.name}</p>
+                            <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                            {item.weight && <p className="text-sm text-gray-500">Weight: {item.weight}</p>}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-900">₹{item.price}</p>
+                            <p className="text-sm text-gray-500">Total: ₹{item.price * item.quantity}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No items found</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Order Timeline */}
+              <div className="border-t pt-4">
+                <h4 className="text-md font-medium text-gray-900 mb-3">Order Timeline</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                    <span className="text-gray-600">Order placed on {new Date(selectedOrder.created_at).toLocaleString()}</span>
+                  </div>
+                  {selectedOrder.updated_at !== selectedOrder.created_at && (
+                    <div className="flex items-center text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      <span className="text-gray-600">Last updated on {new Date(selectedOrder.updated_at).toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => {
+                  setShowOrderDetailsModal(false);
+                  setSelectedOrder(null);
+                }}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
