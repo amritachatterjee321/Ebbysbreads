@@ -878,6 +878,7 @@ const CheckoutPage = () => {
 
 const AccountPage = () => {
   const { total, setCurrentPage, placeOrder, customerInfo, serviceablePincodes, cart } = useAppContext();
+  const [existingCustomerFound, setExistingCustomerFound] = useState(false);
 
   const validationRules = (values: CustomerInfo): ValidationErrors => {
     const errors: ValidationErrors = {};
@@ -892,7 +893,48 @@ const AccountPage = () => {
     return errors;
   };
 
-  const { values, errors, handleChange, validate } = useFormValidation(customerInfo, validationRules);
+  const { values, errors, handleChange, validate, setValues } = useFormValidation(customerInfo, validationRules);
+
+  // Function to check for existing customer and auto-fill form
+  const checkExistingCustomer = async (phone: string) => {
+    if (phone.length === 10) {
+      try {
+        const existingCustomer = await customerService.getByPhone(phone);
+        if (existingCustomer) {
+          // Auto-fill the form with existing customer data
+          setValues({
+            ...values,
+            name: existingCustomer.name,
+            email: existingCustomer.email || '',
+            address: existingCustomer.address,
+            pincode: existingCustomer.pincode
+          });
+          
+          // Show success message and set state
+          setExistingCustomerFound(true);
+          console.log('Existing customer found and form auto-filled');
+          
+          // Clear the success message after 5 seconds
+          setTimeout(() => setExistingCustomerFound(false), 5000);
+        } else {
+          setExistingCustomerFound(false);
+        }
+      } catch (error) {
+        console.error('Error checking existing customer:', error);
+        setExistingCustomerFound(false);
+      }
+    }
+  };
+
+  // Enhanced handleChange to include customer lookup
+  const handleCustomerFieldChange = (field: keyof CustomerInfo, value: string) => {
+    handleChange(field, value);
+    
+    // If phone number is being entered, check for existing customer
+    if (field === 'phone') {
+      checkExistingCustomer(value);
+    }
+  };
 
   const handlePlaceOrder = async () => {
     console.log('🔍 handlePlaceOrder called');
@@ -925,26 +967,36 @@ const AccountPage = () => {
         <div className="container mx-auto px-4 py-8">
             <div className="max-w-2xl mx-auto">
                 <Card>
-                    <CardHeader><CardTitle className="text-2xl">Create Your Account</CardTitle><p className="text-gray-600">We need your details for delivery and order updates</p></CardHeader>
+                    <CardHeader>
+                      <CardTitle className="text-2xl">Create Your Account</CardTitle>
+                      <p className="text-gray-600">We need your details for delivery and order updates</p>
+                      {existingCustomerFound && (
+                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                          <p className="text-green-700 text-sm">
+                            ✅ Existing customer found! Your details have been auto-filled.
+                          </p>
+                        </div>
+                      )}
+                    </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><Label htmlFor="name">Full Name *</Label><Input id="name" placeholder="Enter your full name" value={values.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('name', e.target.value)} className={errors.name ? 'border-red-500' : ''} />{errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}</div>
-                            <div><Label htmlFor="phone">Phone Number *</Label><Input id="phone" placeholder="10-digit mobile number" value={values.phone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('phone', e.target.value)} maxLength={10} className={errors.phone ? 'border-red-500' : ''} />{errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}</div>
+                            <div><Label htmlFor="name">Full Name *</Label><Input id="name" placeholder="Enter your full name" value={values.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('name', e.target.value)} className={errors.name ? 'border-red-500' : ''} />{errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}</div>
+                            <div><Label htmlFor="phone">Phone Number *</Label><Input id="phone" placeholder="10-digit mobile number" value={values.phone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('phone', e.target.value)} maxLength={10} className={errors.phone ? 'border-red-500' : ''} />{errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}</div>
                         </div>
-                        <div><Label htmlFor="email">Email Address *</Label><Input id="email" type="email" placeholder="your.email@example.com" value={values.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('email', e.target.value)} className={errors.email ? 'border-red-500' : ''} />{errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}</div>
-                        <div><Label htmlFor="address">Complete Address *</Label><Input id="address" placeholder="House no, Street, Area, City" value={values.address} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('address', e.target.value)} className={errors.address ? 'border-red-500' : ''} />{errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}</div>
+                        <div><Label htmlFor="email">Email Address *</Label><Input id="email" type="email" placeholder="your.email@example.com" value={values.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('email', e.target.value)} className={errors.email ? 'border-red-500' : ''} />{errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}</div>
+                        <div><Label htmlFor="address">Complete Address *</Label><Input id="address" placeholder="House no, Street, Area, City" value={values.address} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('address', e.target.value)} className={errors.address ? 'border-red-500' : ''} />{errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}</div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <Label htmlFor="pincode">Pincode *</Label>
                               <PincodeInput
                                 value={values.pincode}
-                                onChange={(value) => handleChange('pincode', value)}
+                                onChange={(value) => handleCustomerFieldChange('pincode', value)}
                                 placeholder="110001"
                                 className={errors.pincode ? 'border-red-500' : ''}
                               />
                               {errors.pincode && <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>}
                             </div>
-                            <div><Label htmlFor="addressType">Address Type</Label><Select value={values.addressType} onValueChange={(value) => handleChange('addressType', value)}><SelectItem value="Home">Home</SelectItem><SelectItem value="Office">Office</SelectItem><SelectItem value="Other">Other</SelectItem></Select></div>
+                            <div><Label htmlFor="addressType">Address Type</Label><Select value={values.addressType} onValueChange={(value) => handleCustomerFieldChange('addressType', value)}><SelectItem value="Home">Home</SelectItem><SelectItem value="Office">Office</SelectItem><SelectItem value="Other">Other</SelectItem></Select></div>
                         </div>
                         <Button onClick={handlePlaceOrder} className="w-full bg-orange-600 hover:bg-orange-700" size="lg">Place Order - ₹{total} (COD)<Check className="h-4 w-4 ml-2" /></Button>
                     </CardContent>
