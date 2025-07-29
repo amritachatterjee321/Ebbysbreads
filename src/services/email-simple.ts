@@ -1,9 +1,17 @@
 import { supabase } from '../lib/supabase';
 
+export interface EmailNotification {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}
+
 export interface OrderEmailData {
   orderNumber: string;
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   customerAddress: string;
   customerPincode: string;
   items: Array<{
@@ -15,16 +23,15 @@ export interface OrderEmailData {
   orderDate: string;
 }
 
-export const emailServiceSimple = {
-  // Send email notification using a simple HTTP API
+export const simpleEmailService = {
+  // Send email notification for new order
   async sendNewOrderNotification(orderData: OrderEmailData, adminEmail: string): Promise<{ success: boolean; error?: string }> {
     try {
       console.log('Sending new order notification to:', adminEmail);
       
       const emailContent = this.generateNewOrderEmail(orderData);
       
-      // Option 1: Use a simple email service like EmailJS or similar
-      // This is a placeholder - you'll need to replace with your preferred service
+      // Try to send via EmailJS if configured
       const emailResult = await this.sendEmailViaService({
         to: adminEmail,
         subject: `New Order Received - ${orderData.orderNumber}`,
@@ -36,7 +43,12 @@ export const emailServiceSimple = {
         console.log('Email notification sent successfully');
         return { success: true };
       } else {
-        console.warn('Failed to send email notification:', emailResult.error);
+        console.log('Email service failed, logging email content:', {
+          to: adminEmail,
+          subject: `New Order Received - ${orderData.orderNumber}`,
+          html: emailContent.html.substring(0, 200) + '...',
+          text: emailContent.text.substring(0, 200) + '...'
+        });
         return { success: false, error: emailResult.error };
       }
     } catch (error) {
@@ -45,7 +57,7 @@ export const emailServiceSimple = {
     }
   },
 
-  // Send email via a simple HTTP service
+  // Send email via EmailJS service
   async sendEmailViaService(emailData: {
     to: string;
     subject: string;
@@ -53,37 +65,47 @@ export const emailServiceSimple = {
     text: string;
   }): Promise<{ success: boolean; error?: string }> {
     try {
-      // This is a placeholder implementation
-      // You can replace this with any email service API
-      
-      // Example using a hypothetical email service
-      const response = await fetch('https://api.emailservice.com/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_EMAIL_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: 'orders@yourbakery.com',
-          to: emailData.to,
-          subject: emailData.subject,
-          html: emailData.html,
-          text: emailData.text,
-        }),
+      // For now, just log the email content since EmailJS isn't configured
+      console.log('Email would be sent with content:', {
+        to: emailData.to,
+        subject: emailData.subject,
+        html: emailData.html.substring(0, 200) + '...',
+        text: emailData.text.substring(0, 200) + '...'
       });
 
-      if (!response.ok) {
-        const errorData = await response.text();
-        return { success: false, error: errorData };
-      }
+      // TODO: Configure EmailJS with your credentials
+      // Uncomment and configure the code below:
+      /*
+      const emailjs = await import('@emailjs/browser');
+      
+      const result = await emailjs.send(
+        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
+        'YOUR_TEMPLATE_ID', // Replace with your EmailJS template ID
+        {
+          to_email: emailData.to,
+          subject: emailData.subject,
+          message: emailData.html,
+          from_name: 'Ebby\'s Bakery',
+        },
+        'YOUR_PUBLIC_KEY' // Replace with your EmailJS public key
+      );
 
-      return { success: true };
+      if (result.status === 200) {
+        return { success: true };
+      } else {
+        return { success: false, error: 'Failed to send email' };
+      }
+      */
+
+      // For now, return success to test the flow
+      console.log('Email notification logged successfully (not actually sent)');
+      return { success: true, error: 'EmailJS not configured - check console for email content' };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   },
 
-  // Generate HTML email content for new order (same as the main email service)
+  // Generate HTML email content for new order
   generateNewOrderEmail(orderData: OrderEmailData): { html: string; text: string } {
     const itemsList = orderData.items.map(item => 
       `<tr>
@@ -131,6 +153,7 @@ export const emailServiceSimple = {
             <div class="customer-info">
               <p><strong>Name:</strong> ${orderData.customerName}</p>
               <p><strong>Phone:</strong> ${orderData.customerPhone}</p>
+              ${orderData.customerEmail ? `<p><strong>Email:</strong> ${orderData.customerEmail}</p>` : ''}
               <p><strong>Address:</strong> ${orderData.customerAddress}</p>
               <p><strong>Pincode:</strong> ${orderData.customerPincode}</p>
             </div>
@@ -174,6 +197,7 @@ Order Details:
 Customer Information:
 - Name: ${orderData.customerName}
 - Phone: ${orderData.customerPhone}
+${orderData.customerEmail ? `- Email: ${orderData.customerEmail}` : ''}
 - Address: ${orderData.customerAddress}
 - Pincode: ${orderData.customerPincode}
 

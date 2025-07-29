@@ -21,7 +21,7 @@ import TestSupabase from './test-supabase';
 import TestPincode from './test-pincode';
 import TestPincodeSimple from './test-pincode-simple';
 import { productService, homepageSettingsService, orderService, customerService } from './services/database';
-import { emailService } from './services/email';
+import { simpleEmailService } from './services/email-simple';
 import { supabase } from './lib/supabase';
 import { PincodeInput } from './components/PincodeInput';
 import { PincodeValidationResult } from './services/pincode';
@@ -375,7 +375,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
       // Send email notification to admin
       try {
-        const adminEmail = await emailService.getAdminEmail();
+        const adminEmail = await simpleEmailService.getAdminEmail();
         if (adminEmail) {
           const emailData = {
             orderNumber: orderNumber,
@@ -393,7 +393,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
             orderDate: new Date().toLocaleDateString('en-IN')
           };
 
-          const emailResult = await emailService.sendNewOrderNotification(emailData, adminEmail);
+          const emailResult = await simpleEmailService.sendNewOrderNotification(emailData, adminEmail);
           if (emailResult.success) {
             console.log('Email notification sent successfully');
           } else {
