@@ -324,6 +324,24 @@ export const customerService = {
     
     if (error) throw error;
     return data;
+  },
+
+  async createOrUpdate(customerData: CustomerInsert): Promise<Customer> {
+    // First try to find existing customer by phone number
+    const existingCustomer = await this.getByPhone(customerData.phone);
+    
+    if (existingCustomer) {
+      // Update existing customer with new information
+      return this.update(existingCustomer.id, {
+        name: customerData.name,
+        email: customerData.email,
+        address: customerData.address,
+        pincode: customerData.pincode
+      });
+    } else {
+      // Create new customer
+      return this.create(customerData);
+    }
   }
 };
 

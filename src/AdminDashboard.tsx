@@ -1553,8 +1553,8 @@ const AdminDashboard = () => {
             )}
           </div>
         </div>
-      </div>
-    );
+    </div>
+  );
   }
 
   // Hero Image Upload Modal

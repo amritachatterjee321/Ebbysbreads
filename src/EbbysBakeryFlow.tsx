@@ -20,7 +20,7 @@ import AdminDashboard from './AdminDashboard';
 import TestSupabase from './test-supabase';
 import TestPincode from './test-pincode';
 import TestPincodeSimple from './test-pincode-simple';
-import { productService, homepageSettingsService, orderService } from './services/database';
+import { productService, homepageSettingsService, orderService, customerService } from './services/database';
 import { emailService } from './services/email';
 import { supabase } from './lib/supabase';
 import { PincodeInput } from './components/PincodeInput';
@@ -330,11 +330,23 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       // Generate order number
       const orderNumber = `EB${Date.now().toString().slice(-6)}`;
       
+      // Create or update customer account
+      console.log('Creating/updating customer account:', customerData);
+      const customerAccount = await customerService.createOrUpdate({
+        name: customerData.name,
+        phone: customerData.phone,
+        email: customerData.email,
+        address: customerData.address,
+        pincode: customerData.pincode
+      });
+      console.log('Customer account updated successfully:', customerAccount);
+      
       // Prepare order data
       const orderData = {
         order_number: orderNumber,
         customer_name: customerData.name,
         customer_phone: customerData.phone,
+        customer_email: customerData.email || undefined,
         customer_address: customerData.address,
         customer_pincode: customerData.pincode,
         items: cart.map(item => ({
@@ -363,6 +375,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
             orderNumber: orderNumber,
             customerName: customerData.name,
             customerPhone: customerData.phone,
+            customerEmail: customerData.email || 'Not provided',
             customerAddress: customerData.address,
             customerPincode: customerData.pincode,
             items: cart.map(item => ({
@@ -871,6 +884,8 @@ const AccountPage = () => {
     if (!values.name.trim()) errors.name = "Name is required";
     if (!values.phone.trim()) errors.phone = "Phone number is required";
     else if (!/^\d{10}$/.test(values.phone)) errors.phone = "Enter a valid 10-digit phone number";
+    if (!values.email.trim()) errors.email = "Email address is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) errors.email = "Enter a valid email address";
     if (!values.address.trim()) errors.address = "Address is required";
     if (!values.pincode.trim()) errors.pincode = "Pincode is required";
     else if (!serviceablePincodes.includes(values.pincode)) errors.pincode = "Sorry, we don't deliver to this pincode";
@@ -916,6 +931,7 @@ const AccountPage = () => {
                             <div><Label htmlFor="name">Full Name *</Label><Input id="name" placeholder="Enter your full name" value={values.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('name', e.target.value)} className={errors.name ? 'border-red-500' : ''} />{errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}</div>
                             <div><Label htmlFor="phone">Phone Number *</Label><Input id="phone" placeholder="10-digit mobile number" value={values.phone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('phone', e.target.value)} maxLength={10} className={errors.phone ? 'border-red-500' : ''} />{errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}</div>
                         </div>
+                        <div><Label htmlFor="email">Email Address *</Label><Input id="email" type="email" placeholder="your.email@example.com" value={values.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('email', e.target.value)} className={errors.email ? 'border-red-500' : ''} />{errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}</div>
                         <div><Label htmlFor="address">Complete Address *</Label><Input id="address" placeholder="House no, Street, Area, City" value={values.address} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('address', e.target.value)} className={errors.address ? 'border-red-500' : ''} />{errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}</div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>

@@ -62,6 +62,7 @@ export interface Database {
           order_number: string;
           customer_name: string;
           customer_phone: string;
+          customer_email?: string;
           customer_address: string;
           customer_pincode: string;
           items: any;
@@ -78,6 +79,7 @@ export interface Database {
           order_number: string;
           customer_name: string;
           customer_phone: string;
+          customer_email?: string;
           customer_address: string;
           customer_pincode: string;
           items: any;
@@ -94,6 +96,7 @@ export interface Database {
           order_number?: string;
           customer_name?: string;
           customer_phone?: string;
+          customer_email?: string;
           customer_address?: string;
           customer_pincode?: string;
           items?: any;

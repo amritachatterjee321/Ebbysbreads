@@ -11,6 +11,7 @@ export interface OrderEmailData {
   orderNumber: string;
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   customerAddress: string;
   customerPincode: string;
   items: Array<{
@@ -96,6 +97,7 @@ export const emailService = {
             <div class="customer-info">
               <p><strong>Name:</strong> ${orderData.customerName}</p>
               <p><strong>Phone:</strong> ${orderData.customerPhone}</p>
+              ${orderData.customerEmail ? `<p><strong>Email:</strong> ${orderData.customerEmail}</p>` : ''}
               <p><strong>Address:</strong> ${orderData.customerAddress}</p>
               <p><strong>Pincode:</strong> ${orderData.customerPincode}</p>
             </div>
@@ -139,6 +141,7 @@ Order Details:
 Customer Information:
 - Name: ${orderData.customerName}
 - Phone: ${orderData.customerPhone}
+${orderData.customerEmail ? `- Email: ${orderData.customerEmail}` : ''}
 - Address: ${orderData.customerAddress}
 - Pincode: ${orderData.customerPincode}
 
