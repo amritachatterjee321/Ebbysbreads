@@ -879,6 +879,7 @@ const CheckoutPage = () => {
 const AccountPage = () => {
   const { total, setCurrentPage, placeOrder, customerInfo, serviceablePincodes, cart } = useAppContext();
   const [existingCustomerFound, setExistingCustomerFound] = useState(false);
+  const [phoneNumberLocked, setPhoneNumberLocked] = useState(false);
 
   const validationRules = (values: CustomerInfo): ValidationErrors => {
     const errors: ValidationErrors = {};
@@ -910,18 +911,21 @@ const AccountPage = () => {
             pincode: existingCustomer.pincode
           });
           
-          // Show success message and set state
+          // Show success message and lock phone number
           setExistingCustomerFound(true);
+          setPhoneNumberLocked(true);
           console.log('Existing customer found and form auto-filled');
           
           // Clear the success message after 5 seconds
           setTimeout(() => setExistingCustomerFound(false), 5000);
         } else {
           setExistingCustomerFound(false);
+          setPhoneNumberLocked(false);
         }
       } catch (error) {
         console.error('Error checking existing customer:', error);
         setExistingCustomerFound(false);
+        setPhoneNumberLocked(false);
       }
     }
   };
@@ -981,7 +985,20 @@ const AccountPage = () => {
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div><Label htmlFor="name">Full Name *</Label><Input id="name" placeholder="Enter your full name" value={values.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('name', e.target.value)} className={errors.name ? 'border-red-500' : ''} />{errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}</div>
-                            <div><Label htmlFor="phone">Phone Number *</Label><Input id="phone" placeholder="10-digit mobile number" value={values.phone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('phone', e.target.value)} maxLength={10} className={errors.phone ? 'border-red-500' : ''} />{errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}</div>
+                            <div>
+                              <Label htmlFor="phone">Phone Number *</Label>
+                              <Input 
+                                id="phone" 
+                                placeholder="10-digit mobile number" 
+                                value={values.phone} 
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('phone', e.target.value)} 
+                                maxLength={10} 
+                                disabled={phoneNumberLocked}
+                                className={`${errors.phone ? 'border-red-500' : ''} ${phoneNumberLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`} 
+                              />
+                              {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                              {phoneNumberLocked && <p className="text-blue-600 text-xs mt-1">🔒 Phone number cannot be changed for existing customers</p>}
+                            </div>
                         </div>
                         <div><Label htmlFor="email">Email Address *</Label><Input id="email" type="email" placeholder="your.email@example.com" value={values.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('email', e.target.value)} className={errors.email ? 'border-red-500' : ''} />{errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}</div>
                         <div><Label htmlFor="address">Complete Address *</Label><Input id="address" placeholder="House no, Street, Area, City" value={values.address} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('address', e.target.value)} className={errors.address ? 'border-red-500' : ''} />{errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}</div>

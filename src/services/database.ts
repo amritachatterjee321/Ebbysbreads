@@ -303,6 +303,11 @@ export const customerService = {
     return data;
   },
 
+  async isPhoneNumberTaken(phone: string): Promise<boolean> {
+    const customer = await this.getByPhone(phone);
+    return customer !== null;
+  },
+
   async create(customer: CustomerInsert): Promise<Customer> {
     const { data, error } = await supabase
       .from('customers')
@@ -310,14 +315,27 @@ export const customerService = {
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      // Handle unique constraint violation specifically
+      if (error.code === '23505' && error.message.includes('phone')) {
+        throw new Error('A customer with this phone number already exists');
+      }
+      throw error;
+    }
     return data;
   },
 
   async update(id: string, updates: Partial<Customer>): Promise<Customer> {
+    // Remove phone number from updates to prevent changes
+    const { phone, ...safeUpdates } = updates;
+    
+    if (phone !== undefined) {
+      console.warn('Phone number update attempted but blocked for customer ID:', id);
+    }
+    
     const { data, error } = await supabase
       .from('customers')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update({ ...safeUpdates, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single();
@@ -331,16 +349,34 @@ export const customerService = {
     const existingCustomer = await this.getByPhone(customerData.phone);
     
     if (existingCustomer) {
-      // Update existing customer with new information
+      // Update existing customer with new information (EXCLUDING phone number)
       return this.update(existingCustomer.id, {
         name: customerData.name,
         email: customerData.email,
         address: customerData.address,
         pincode: customerData.pincode
+        // Note: phone number is intentionally excluded to prevent changes
       });
     } else {
       // Create new customer
-      return this.create(customerData);
+      try {
+        return await this.create(customerData);
+      } catch (error) {
+        // If creation fails due to unique constraint, try to find and update
+        if (error instanceof Error && error.message.includes('phone number already exists')) {
+          const retryCustomer = await this.getByPhone(customerData.phone);
+          if (retryCustomer) {
+            return this.update(retryCustomer.id, {
+              name: customerData.name,
+              email: customerData.email,
+              address: customerData.address,
+              pincode: customerData.pincode
+              // Note: phone number is intentionally excluded to prevent changes
+            });
+          }
+        }
+        throw error;
+      }
     }
   }
 };
