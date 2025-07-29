@@ -1039,47 +1039,34 @@ const AccountPage = () => {
 
   const { values, errors, handleChange, validate, setValues } = useFormValidation(customerInfo, validationRules);
 
-  // Reset phone number lock state when phone number changes
-  useEffect(() => {
-    if (values.phone.length !== 10) {
-      setPhoneNumberLocked(false);
-      setExistingCustomerFound(false);
-    }
-  }, [values.phone]);
+
 
   // Function to check for existing customer and auto-fill form
   const checkExistingCustomer = async (phone: string) => {
-    // Only check for existing customer if phone number is exactly 10 digits
-    if (phone.length === 10) {
-      try {
-        const existingCustomer = await customerService.getByPhone(phone);
-        if (existingCustomer) {
-          // Auto-fill the form with existing customer data
-          setValues({
-            ...values,
-            name: existingCustomer.name,
-            email: existingCustomer.email || '',
-            address: existingCustomer.address,
-            pincode: existingCustomer.pincode
-          });
-          
-          // Show success message and lock phone number
-          setExistingCustomerFound(true);
-          setPhoneNumberLocked(true);
-          
-          // Clear the success message after 5 seconds
-          setTimeout(() => setExistingCustomerFound(false), 5000);
-        } else {
-          setExistingCustomerFound(false);
-          setPhoneNumberLocked(false);
-        }
-      } catch (error) {
-        console.error('Error checking existing customer:', error);
+    try {
+      const existingCustomer = await customerService.getByPhone(phone);
+      if (existingCustomer) {
+        // Auto-fill the form with existing customer data
+        setValues({
+          ...values,
+          name: existingCustomer.name,
+          email: existingCustomer.email || '',
+          address: existingCustomer.address,
+          pincode: existingCustomer.pincode
+        });
+        
+        // Show success message and lock phone number
+        setExistingCustomerFound(true);
+        setPhoneNumberLocked(true);
+        
+        // Clear the success message after 5 seconds
+        setTimeout(() => setExistingCustomerFound(false), 5000);
+      } else {
         setExistingCustomerFound(false);
         setPhoneNumberLocked(false);
       }
-    } else {
-      // If phone number is not 10 digits, unlock it and clear existing customer status
+    } catch (error) {
+      console.error('Error checking existing customer:', error);
       setExistingCustomerFound(false);
       setPhoneNumberLocked(false);
     }
@@ -1089,9 +1076,18 @@ const AccountPage = () => {
   const handleCustomerFieldChange = (field: keyof CustomerInfo, value: string) => {
     handleChange(field, value);
     
-    // If phone number is being entered, check for existing customer
+    // If phone number is being entered, only check for existing customer when exactly 10 digits
     if (field === 'phone') {
-      checkExistingCustomer(value);
+      // Reset states when phone number changes
+      if (value.length !== 10) {
+        setPhoneNumberLocked(false);
+        setExistingCustomerFound(false);
+      }
+      
+      // Only check for existing customer when exactly 10 digits are entered
+      if (value.length === 10) {
+        checkExistingCustomer(value);
+      }
     }
   };
 
@@ -1148,13 +1144,27 @@ const AccountPage = () => {
                                 value={values.phone} 
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('phone', e.target.value)} 
                                 maxLength={10} 
-                                disabled={phoneNumberLocked}
-                                className={`${errors.phone ? 'border-red-500' : ''} ${phoneNumberLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`} 
+                                className={`${errors.phone ? 'border-red-500' : ''} ${phoneNumberLocked ? 'bg-gray-100' : ''}`} 
                               />
                               {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                               {phoneNumberLocked && <p className="text-blue-600 text-xs mt-1">🔒 Phone number cannot be changed for existing customers</p>}
                               {!phoneNumberLocked && values.phone.length > 0 && values.phone.length < 10 && (
                                 <p className="text-orange-600 text-xs mt-1">📱 Please enter a complete 10-digit phone number</p>
+                              )}
+                              {phoneNumberLocked && (
+                                <div className="mt-2">
+                                  <p className="text-blue-600 text-xs">🔒 Phone number locked for existing customer</p>
+                                  <button 
+                                    type="button"
+                                    onClick={() => {
+                                      setPhoneNumberLocked(false);
+                                      setExistingCustomerFound(false);
+                                    }}
+                                    className="text-xs text-orange-600 underline hover:text-orange-700"
+                                  >
+                                    Unlock phone number
+                                  </button>
+                                </div>
                               )}
                             </div>
                         </div>
