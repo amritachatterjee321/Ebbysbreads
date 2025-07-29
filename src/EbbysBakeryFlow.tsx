@@ -516,6 +516,7 @@ const useFormValidation = (initialState: CustomerInfo, validationRules: (values:
     const [errors, setErrors] = useState<ValidationErrors>({});
   
     const handleChange = (id: keyof CustomerInfo, value: string) => {
+      console.log('🔍 handleChange called:', id, 'value:', value, 'length:', value.length);
       setValues(prev => ({ ...prev, [id]: value }));
     };
   
@@ -1040,36 +1041,66 @@ const AccountPage = () => {
 
 
 
-  // Function to check for existing customer and auto-fill form
+  // Enhanced function to check for existing customer and auto-fill form
   const checkExistingCustomer = async (phone: string) => {
     try {
+      console.log('🔍 Checking for existing customer with phone:', phone);
+      
+      // Step 1: Validate phone number format (must be exactly 10 digits)
+      if (!/^\d{10}$/.test(phone)) {
+        console.log('❌ Invalid phone number format:', phone);
+        setExistingCustomerFound(false);
+        return;
+      }
+      
+      // Step 2: Check if customer exists in database
       const existingCustomer = await customerService.getByPhone(phone);
+      
       if (existingCustomer) {
-        // Auto-fill the form with existing customer data
-        setValues({
-          ...values,
-          name: existingCustomer.name,
-          email: existingCustomer.email || '',
-          address: existingCustomer.address,
-          pincode: existingCustomer.pincode
-        });
-        
-        // Show success message for existing customer
+        console.log('✅ Existing customer found:', existingCustomer);
         setExistingCustomerFound(true);
         
-        // Clear the success message after 5 seconds
+        // Step 3: Auto-fill all customer details from existing data
+        setValues(prev => ({
+          ...prev,
+          name: existingCustomer.name || '',
+          email: existingCustomer.email || '',
+          address: existingCustomer.address || '',
+          pincode: existingCustomer.pincode || '',
+          addressType: 'Home', // Default value since not stored in customer table
+          landmark: '' // Default value since not stored in customer table
+        }));
+        
+        console.log('✅ Customer details auto-filled from existing data');
+        
+        // Show success message for existing customer
         setTimeout(() => setExistingCustomerFound(false), 5000);
       } else {
+        console.log('❌ No existing customer found for phone:', phone);
         setExistingCustomerFound(false);
+        
+        // Step 4: Clear form for new customer (keep phone number)
+        setValues(prev => ({
+          ...prev,
+          name: '',
+          email: '',
+          address: '',
+          pincode: '',
+          addressType: 'Home',
+          landmark: ''
+        }));
+        
+        console.log('✅ Form cleared for new customer');
       }
     } catch (error) {
-      console.error('Error checking existing customer:', error);
+      console.error('❌ Error checking existing customer:', error);
       setExistingCustomerFound(false);
     }
   };
 
   // Enhanced handleChange to include customer lookup
   const handleCustomerFieldChange = (field: keyof CustomerInfo, value: string) => {
+    console.log('🔍 handleCustomerFieldChange:', field, 'value:', value, 'length:', value.length);
     handleChange(field, value);
     
     // If phone number is being entered, only check for existing customer when exactly 10 digits
@@ -1136,10 +1167,21 @@ const AccountPage = () => {
                               <Label htmlFor="phone">Phone Number *</Label>
                               <Input 
                                 id="phone" 
+                                type="tel"
                                 placeholder="10-digit mobile number" 
                                 value={values.phone} 
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('phone', e.target.value)} 
-                                maxLength={10} 
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                  console.log('🔍 Input onChange event:', e.target.value, 'length:', e.target.value.length);
+                                  handleCustomerFieldChange('phone', e.target.value);
+                                }} 
+                                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                                  console.log('🔍 Input onKeyDown:', e.key, 'current value:', values.phone);
+                                }}
+                                onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                                  console.log('🔍 Input onInput event:', (e.target as HTMLInputElement).value);
+                                }}
+                                maxLength={10}
+                                pattern="[0-9]{10}"
                                 className={errors.phone ? 'border-red-500' : ''} 
                               />
                               {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
@@ -1150,6 +1192,16 @@ const AccountPage = () => {
                               <div className="mt-1 text-xs text-gray-400">
                                 Debug: Phone length: {values.phone.length}, Existing: {existingCustomerFound.toString()}
                               </div>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  console.log('🔍 Test button clicked');
+                                  setValues(prev => ({ ...prev, phone: '9560487800' }));
+                                }}
+                                className="text-xs text-blue-600 underline"
+                              >
+                                Test: Set to 10 digits
+                              </button>
                             </div>
                         </div>
                         <div><Label htmlFor="email">Email Address *</Label><Input id="email" type="email" placeholder="your.email@example.com" value={values.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('email', e.target.value)} className={errors.email ? 'border-red-500' : ''} />{errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}</div>
