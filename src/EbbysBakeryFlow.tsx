@@ -903,6 +903,11 @@ const AccountPage = () => {
       console.log('🔍 Resetting phone lock state - not 10 digits');
       setPhoneNumberLocked(false);
       setExistingCustomerFound(false);
+      // Force a re-render by updating state
+      setTimeout(() => {
+        console.log('🔍 Force refresh: phone lock state should be false now');
+        setPhoneNumberLocked(false);
+      }, 0);
     }
   }, [values.phone]);
 
@@ -1024,6 +1029,21 @@ const AccountPage = () => {
                               {!phoneNumberLocked && values.phone.length > 0 && values.phone.length < 10 && (
                                 <p className="text-orange-600 text-xs mt-1">📱 Please enter a complete 10-digit phone number</p>
                               )}
+                              {/* Debug info - remove in production */}
+                              <p className="text-gray-400 text-xs mt-1">
+                                Debug: Phone length: {values.phone.length}, Locked: {phoneNumberLocked.toString()}, Existing: {existingCustomerFound.toString()}
+                              </p>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  console.log('🔍 Manual reset clicked');
+                                  setPhoneNumberLocked(false);
+                                  setExistingCustomerFound(false);
+                                }}
+                                className="text-xs text-blue-600 underline"
+                              >
+                                Reset Phone Lock (Debug)
+                              </button>
                             </div>
                         </div>
                         <div><Label htmlFor="email">Email Address *</Label><Input id="email" type="email" placeholder="your.email@example.com" value={values.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('email', e.target.value)} className={errors.email ? 'border-red-500' : ''} />{errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}</div>
