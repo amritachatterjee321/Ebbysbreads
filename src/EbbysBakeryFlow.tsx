@@ -168,6 +168,7 @@ type AppContextType = {
     aboutImageUrl: string;
   } | null;
   lastRefreshTime: Date;
+  isLoading: boolean;
   subtotal: number;
   deliveryCharges: number;
   total: number;
@@ -196,6 +197,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const [orderNumber, setOrderNumber] = useState('');
   const [orderTotal, setOrderTotal] = useState<number>(0);
   const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
   const [homepageSettings, setHomepageSettings] = useState<{
@@ -214,10 +216,16 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   // Fetch data from database on mount
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         console.log('Initial data fetch started...');
-        // Fetch products
-        const productsData = await productService.getActive();
+        
+        // Fetch both products and settings in parallel for better performance
+        const [productsData, settingsData] = await Promise.all([
+          productService.getActive(),
+          homepageSettingsService.get()
+        ]);
+        
         console.log('Initial products data:', productsData);
         const mappedProducts = productsData.map(product => ({
           id: product.id,
@@ -228,13 +236,11 @@ export const AppProvider = ({ children }: AppProviderProps) => {
           description: product.description,
           isBestseller: product.is_bestseller,
           isNew: product.is_new,
-          stock: product.stock || 0 // Assuming stock is available in the product object
+          stock: product.stock || 0
         }));
         console.log('Initial mapped products:', mappedProducts);
         setProducts(mappedProducts);
 
-        // Fetch homepage settings
-        const settingsData = await homepageSettingsService.get();
         if (settingsData) {
           setHomepageSettings({
             brandName: settingsData.brand_name,
@@ -254,12 +260,12 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         // Fallback to initial data if database fails
         console.log('Falling back to initial products');
         setProducts(initialProducts);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchData();
-    // Don't override serviceable pincodes with hardcoded values
-    // They will be set from the database in fetchData()
   }, []);
 
   // Set up real-time subscription for product changes
@@ -430,6 +436,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
 
   const refreshProducts = async () => {
     try {
+      setIsLoading(true);
       console.log('Refreshing products...');
       const data = await productService.getActive();
       console.log('Fetched products:', data);
@@ -442,7 +449,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         description: product.description,
         isBestseller: product.is_bestseller,
         isNew: product.is_new,
-        stock: product.stock || 0 // Assuming stock is available in the product object
+        stock: product.stock || 0
       }));
       console.log('Mapped products:', mappedProducts);
       // Force a new array reference to ensure React detects the change
@@ -456,6 +463,8 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       // Fallback to initial products if database fails
       console.log('Falling back to initial products due to error');
       setProducts(initialProducts);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -487,7 +496,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const total = subtotal + deliveryCharges;
 
   const value = {
-    currentPage, cart, customerInfo, orderNumber, orderTotal, products, serviceablePincodes: homepageSettings?.serviceablePincodes || [], homepageSettings, lastRefreshTime, subtotal, deliveryCharges, total, cartItemCount,
+    currentPage, cart, customerInfo, orderNumber, orderTotal, products, serviceablePincodes: homepageSettings?.serviceablePincodes || [], homepageSettings, lastRefreshTime, isLoading, subtotal, deliveryCharges, total, cartItemCount,
     setCurrentPage, addToCart, updateCartQuantity, removeFromCart, setCustomerInfo, placeOrder, resetApp, refreshProducts, refreshHomepageSettings
   };
 
@@ -522,7 +531,7 @@ const useFormValidation = (initialState: CustomerInfo, validationRules: (values:
 // --- src/components/pages/Homepage.tsx ---
 
 const Homepage = () => {
-  const { products, homepageSettings, cartItemCount, subtotal, total, setCurrentPage, updateCartQuantity, removeFromCart } = useAppContext();
+  const { products, homepageSettings, cartItemCount, subtotal, total, setCurrentPage, updateCartQuantity, removeFromCart, isLoading } = useAppContext();
   
   // Debug logging for products
   useEffect(() => {
@@ -618,7 +627,15 @@ const Homepage = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div className="relative">
                   <div className="relative overflow-hidden rounded-2xl shadow-2xl">
-                    <img src={homepageSettings?.heroImageUrl || "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=600&h=500&fit=crop"} alt="Fresh sourdough bread" className="w-full h-96 object-cover"/>
+                    <img 
+                      src={`${homepageSettings?.heroImageUrl || "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=600&h=500&fit=crop"}?v=${Date.now()}`} 
+                      alt="Fresh sourdough bread" 
+                      className="w-full h-96 object-cover"
+                      onError={(e) => {
+                        // Fallback to default image if hero image fails to load
+                        e.currentTarget.src = "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=600&h=500&fit=crop";
+                      }}
+                    />
                   </div>
                 </div>
                 <div className="space-y-8">
@@ -666,10 +683,36 @@ const Homepage = () => {
               <h2 className="text-4xl font-bold text-gray-800 mb-4">{homepageSettings?.menuTitle || 'THIS WEEK\'S MENU'}</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-              {products.map(product => (
+              {isLoading ? (
+                // Loading skeleton
+                Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="bg-white rounded-lg shadow-lg overflow-hidden animate-pulse">
+                    <div className="h-56 bg-gray-200"></div>
+                    <div className="p-6 space-y-3">
+                      <div className="h-4 bg-gray-200 rounded"></div>
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                      <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-10 bg-gray-200 rounded-full"></div>
+                    </div>
+                  </div>
+                ))
+              ) : products.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-gray-500 text-lg">No products available at the moment.</p>
+                </div>
+              ) : (
+                products.map(product => (
                 <Card key={product.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
                   <div className="relative overflow-hidden">
-                    <img src={product.image} alt={product.name} className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <img 
+                      src={`${product.image}?v=${Date.now()}`} 
+                      alt={product.name} 
+                      className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        // Fallback to a placeholder image if product image fails to load
+                        e.currentTarget.src = "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=400&h=300&fit=crop";
+                      }}
+                    />
                     {/* SOLD OUT Overlay */}
                     {product.stock === 0 && (
                       <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
@@ -726,7 +769,8 @@ const Homepage = () => {
                     {product.stock === 0 && <p className="text-xs text-red-500 text-center mt-2">This item is currently out of stock</p>}
                   </CardContent>
                 </Card>
-              ))}
+              ))
+            )}
             </div>
           </div>
         </section>
@@ -758,7 +802,14 @@ const Homepage = () => {
                 <div className="space-y-4 max-h-60 overflow-y-auto">
                   {cart.map(item => (
                     <div key={item.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                      <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                      <img 
+                        src={`${item.image}?v=${Date.now()}`} 
+                        alt={item.name} 
+                        className="w-12 h-12 object-cover rounded"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=100&h=100&fit=crop";
+                        }}
+                      />
                       <div className="flex-1"><h4 className="font-medium text-gray-800 text-sm">{item.name}</h4><p className="text-gray-600 text-xs">₹{item.price} × {item.quantity}</p></div>
                       <div className="flex items-center space-x-3">
                         <Button 
