@@ -896,13 +896,27 @@ const AccountPage = () => {
 
   const { values, errors, handleChange, validate, setValues } = useFormValidation(customerInfo, validationRules);
 
+  // Reset phone number lock state when phone number changes
+  useEffect(() => {
+    console.log('🔍 useEffect: phone number changed to:', values.phone, 'length:', values.phone.length);
+    if (values.phone.length !== 10) {
+      console.log('🔍 Resetting phone lock state - not 10 digits');
+      setPhoneNumberLocked(false);
+      setExistingCustomerFound(false);
+    }
+  }, [values.phone]);
+
   // Function to check for existing customer and auto-fill form
   const checkExistingCustomer = async (phone: string) => {
+    console.log('🔍 checkExistingCustomer called with phone:', phone, 'length:', phone.length);
+    
     // Only check for existing customer if phone number is exactly 10 digits
     if (phone.length === 10) {
       try {
+        console.log('🔍 Checking for existing customer with 10-digit phone');
         const existingCustomer = await customerService.getByPhone(phone);
         if (existingCustomer) {
+          console.log('🔍 Existing customer found:', existingCustomer);
           // Auto-fill the form with existing customer data
           setValues({
             ...values,
@@ -915,21 +929,23 @@ const AccountPage = () => {
           // Show success message and lock phone number
           setExistingCustomerFound(true);
           setPhoneNumberLocked(true);
-          console.log('Existing customer found and form auto-filled');
+          console.log('✅ Existing customer found and form auto-filled, phone locked');
           
           // Clear the success message after 5 seconds
           setTimeout(() => setExistingCustomerFound(false), 5000);
         } else {
+          console.log('🔍 No existing customer found for this phone number');
           setExistingCustomerFound(false);
           setPhoneNumberLocked(false);
         }
       } catch (error) {
-        console.error('Error checking existing customer:', error);
+        console.error('❌ Error checking existing customer:', error);
         setExistingCustomerFound(false);
         setPhoneNumberLocked(false);
       }
     } else {
       // If phone number is not 10 digits, unlock it and clear existing customer status
+      console.log('🔍 Phone number not 10 digits, unlocking and clearing customer status');
       setExistingCustomerFound(false);
       setPhoneNumberLocked(false);
     }
@@ -937,10 +953,12 @@ const AccountPage = () => {
 
   // Enhanced handleChange to include customer lookup
   const handleCustomerFieldChange = (field: keyof CustomerInfo, value: string) => {
+    console.log('🔍 handleCustomerFieldChange called:', field, 'value:', value);
     handleChange(field, value);
     
     // If phone number is being entered, check for existing customer
     if (field === 'phone') {
+      console.log('🔍 Phone field changed, calling checkExistingCustomer');
       checkExistingCustomer(value);
     }
   };
