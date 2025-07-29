@@ -1055,12 +1055,14 @@ const AccountPage = () => {
           pincode: existingCustomer.pincode
         });
         
-        // Show success message and lock phone number
-        setExistingCustomerFound(true);
-        setPhoneNumberLocked(true);
-        
-        // Clear the success message after 5 seconds
-        setTimeout(() => setExistingCustomerFound(false), 5000);
+        // Show success message and lock phone number ONLY if we have exactly 10 digits
+        if (phone.length === 10) {
+          setExistingCustomerFound(true);
+          setPhoneNumberLocked(true);
+          
+          // Clear the success message after 5 seconds
+          setTimeout(() => setExistingCustomerFound(false), 5000);
+        }
       } else {
         setExistingCustomerFound(false);
         setPhoneNumberLocked(false);
@@ -1078,10 +1080,11 @@ const AccountPage = () => {
     
     // If phone number is being entered, only check for existing customer when exactly 10 digits
     if (field === 'phone') {
-      // Reset states when phone number changes
+      // Always reset states when phone number changes and is not exactly 10 digits
       if (value.length !== 10) {
         setPhoneNumberLocked(false);
         setExistingCustomerFound(false);
+        return; // Exit early, don't check for existing customer
       }
       
       // Only check for existing customer when exactly 10 digits are entered
