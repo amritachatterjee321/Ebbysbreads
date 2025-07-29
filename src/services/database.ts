@@ -297,7 +297,7 @@ export const customerService = {
       .from('customers')
       .select('*')
       .eq('phone', phone)
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     return data;
