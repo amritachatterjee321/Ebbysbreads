@@ -608,6 +608,12 @@ const Homepage = () => {
                     <span className="hidden sm:inline">Admin</span>
                   </Button>
                 </Link>
+                <Link to="/test-email-simple">
+                  <Button variant="outline" size="sm" className="border-blue-300 text-blue-700 hover:bg-blue-50 px-2 sm:px-3">
+                    <Mail className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Test Email</span>
+                  </Button>
+                </Link>
               </div>
             </div>
             {pincodeValidation && pincodeValidation.isValid && pincodeValidation.isServiceable && (
