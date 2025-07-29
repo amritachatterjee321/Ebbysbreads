@@ -77,6 +77,8 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [archivedOrders, setArchivedOrders] = useState<Order[]>([]);
+  const [showArchivedOrders, setShowArchivedOrders] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [homepageSettings, setHomepageSettings] = useState<HomepageSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -131,7 +133,13 @@ const AdminDashboard = () => {
   const fetchOrders = async () => {
     try {
       const data = await orderService.getAll();
-      setOrders(data);
+      
+      // Separate active and archived orders
+      const activeOrders = (data || []).filter(order => !order.is_archived);
+      const archivedOrdersData = (data || []).filter(order => order.is_archived);
+      
+      setOrders(activeOrders);
+      setArchivedOrders(archivedOrdersData);
     } catch (error) {
       console.error('Error fetching orders:', error);
     }
@@ -228,6 +236,26 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error updating order status:', error);
       alert(`Failed to update order status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const archiveOrder = async (orderId: string) => {
+    try {
+      await orderService.update(orderId, { is_archived: true });
+      await fetchOrders();
+    } catch (error) {
+      console.error('Error archiving order:', error);
+      alert(`Failed to archive order: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const unarchiveOrder = async (orderId: string) => {
+    try {
+      await orderService.update(orderId, { is_archived: false });
+      await fetchOrders();
+    } catch (error) {
+      console.error('Error unarchiving order:', error);
+      alert(`Failed to unarchive order: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -1408,7 +1436,34 @@ const AdminDashboard = () => {
   function OrdersTab() {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">Orders</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900">
+            {showArchivedOrders ? 'Archived Orders' : 'Active Orders'}
+          </h2>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowArchivedOrders(false)}
+              className={`px-4 py-2 rounded-md text-sm font-medium ${
+                !showArchivedOrders
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Active Orders ({orders.length})
+            </button>
+            <button
+              onClick={() => setShowArchivedOrders(true)}
+              className={`px-4 py-2 rounded-md text-sm font-medium ${
+                showArchivedOrders
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Archived Orders ({archivedOrders.length})
+            </button>
+          </div>
+        </div>
+        
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -1423,8 +1478,8 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {orders.map((order) => (
-                <tr key={order.id}>
+              {(showArchivedOrders ? archivedOrders : orders).map((order) => (
+                <tr key={order.id} className={showArchivedOrders ? 'bg-gray-50' : ''}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     #{order.order_number}
                   </td>
@@ -1446,23 +1501,42 @@ const AdminDashboard = () => {
                     {new Date(order.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <select
-                      value={order.status}
-                      onChange={(e) => updateOrderStatus(order.id, e.target.value as Order['status'])}
-                      className="border border-gray-300 rounded-md px-2 py-1 text-sm"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="preparing">Preparing</option>
-                      <option value="out_for_delivery">Ready</option>
-                      <option value="delivered">Delivered</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
+                    <div className="flex space-x-2">
+                      {!showArchivedOrders && (
+                        <select
+                          value={order.status}
+                          onChange={(e) => updateOrderStatus(order.id, e.target.value as Order['status'])}
+                          className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="preparing">Preparing</option>
+                          <option value="out_for_delivery">Ready</option>
+                          <option value="delivered">Delivered</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      )}
+                      <button
+                        onClick={() => showArchivedOrders ? unarchiveOrder(order.id) : archiveOrder(order.id)}
+                        className={`px-3 py-1 rounded-md text-xs font-medium ${
+                          showArchivedOrders
+                            ? 'bg-green-600 text-white hover:bg-green-700'
+                            : 'bg-gray-600 text-white hover:bg-gray-700'
+                        }`}
+                      >
+                        {showArchivedOrders ? 'Unarchive' : 'Archive'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {(showArchivedOrders ? archivedOrders : orders).length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              {showArchivedOrders ? 'No archived orders found.' : 'No active orders found.'}
+            </div>
+          )}
         </div>
       </div>
     );
