@@ -20,9 +20,7 @@ import {
   Mail,
   MapPin,
   Calendar,
-  Clock,
-  Search,
-  Filter
+  Search
 } from 'lucide-react';
 import { 
   DndContext, 
