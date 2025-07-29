@@ -1140,7 +1140,7 @@ const AccountPage = () => {
                                 value={values.phone} 
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('phone', e.target.value)} 
                                 maxLength={10} 
-                                className={`${errors.phone ? 'border-red-500' : ''}`} 
+                                className={errors.phone ? 'border-red-500' : ''} 
                               />
                               {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                               {!errors.phone && values.phone.length > 0 && values.phone.length < 10 && (
@@ -1150,16 +1150,6 @@ const AccountPage = () => {
                               <div className="mt-1 text-xs text-gray-400">
                                 Debug: Phone length: {values.phone.length}, Existing: {existingCustomerFound.toString()}
                               </div>
-                              <button 
-                                type="button"
-                                onClick={() => {
-                                  console.log('🔍 Manual reset clicked');
-                                  setExistingCustomerFound(false);
-                                }}
-                                className="text-xs text-blue-600 underline"
-                              >
-                                Reset Customer State (Debug)
-                              </button>
                             </div>
                         </div>
                         <div><Label htmlFor="email">Email Address *</Label><Input id="email" type="email" placeholder="your.email@example.com" value={values.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('email', e.target.value)} className={errors.email ? 'border-red-500' : ''} />{errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}</div>
