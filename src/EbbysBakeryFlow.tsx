@@ -898,6 +898,7 @@ const AccountPage = () => {
 
   // Function to check for existing customer and auto-fill form
   const checkExistingCustomer = async (phone: string) => {
+    // Only check for existing customer if phone number is exactly 10 digits
     if (phone.length === 10) {
       try {
         const existingCustomer = await customerService.getByPhone(phone);
@@ -927,6 +928,10 @@ const AccountPage = () => {
         setExistingCustomerFound(false);
         setPhoneNumberLocked(false);
       }
+    } else {
+      // If phone number is not 10 digits, unlock it and clear existing customer status
+      setExistingCustomerFound(false);
+      setPhoneNumberLocked(false);
     }
   };
 
@@ -998,6 +1003,9 @@ const AccountPage = () => {
                               />
                               {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                               {phoneNumberLocked && <p className="text-blue-600 text-xs mt-1">🔒 Phone number cannot be changed for existing customers</p>}
+                              {!phoneNumberLocked && values.phone.length > 0 && values.phone.length < 10 && (
+                                <p className="text-orange-600 text-xs mt-1">📱 Please enter a complete 10-digit phone number</p>
+                              )}
                             </div>
                         </div>
                         <div><Label htmlFor="email">Email Address *</Label><Input id="email" type="email" placeholder="your.email@example.com" value={values.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('email', e.target.value)} className={errors.email ? 'border-red-500' : ''} />{errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}</div>
