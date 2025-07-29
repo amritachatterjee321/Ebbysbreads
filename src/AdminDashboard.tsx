@@ -1994,6 +1994,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Order Details Modal */}
+      {/* @ts-ignore */}
       {showOrderDetailsModal && selectedOrder && (() => {
         const order = selectedOrder;
         return (
@@ -2017,7 +2018,7 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Order Number</label>
-                  <p className="mt-1 text-sm text-gray-900 font-medium">{selectedOrder!.order_number}</p>
+                  <p className="mt-1 text-sm text-gray-900 font-medium">{order.order_number}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Order Date</label>
@@ -2047,7 +2048,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Total Amount</label>
-                  <p className="mt-1 text-sm text-gray-900 font-semibold">₹{selectedOrder.total}</p>
+                  <p className="mt-1 text-sm text-gray-900 font-semibold">₹{order.total}</p>
                 </div>
               </div>
 
@@ -2057,11 +2058,11 @@ const AdminDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_name}</p>
+                    <p className="mt-1 text-sm text-gray-900">{order.customer_name}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_phone}</p>
+                    <p className="mt-1 text-sm text-gray-900">{order.customer_phone}</p>
                   </div>
                   {selectedOrder.customer_email && (
                     <div>
