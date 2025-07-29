@@ -612,12 +612,12 @@ const AdminDashboard = () => {
             alt={product.name}
             className="w-16 h-16 object-cover rounded"
           />
-            <div>
+          <div>
             <h3 className="font-medium text-gray-900">{product.name}</h3>
             <p className="text-sm text-gray-500">₹{product.price}</p>
             <p className="text-xs text-gray-400">Sort Order: {product.sort_order || 0}</p>
-            </div>
           </div>
+        </div>
         <div className="flex items-center space-x-2">
           <span className={`px-2 py-1 text-xs rounded-full ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             {product.is_active ? 'Active' : 'Inactive'}
@@ -640,8 +640,8 @@ const AdminDashboard = () => {
           >
             Retry
           </button>
-            </div>
-          </div>
+        </div>
+      </div>
     );
   }
 
@@ -658,13 +658,91 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Hero Image Upload Modal */}
+      {showHeroImageUploadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Upload Hero Image</h3>
+              <button
+                onClick={() => {
+                  setShowHeroImageUploadModal(false);
+                  setHeroImagePreview(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleHeroImageUploadSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Hero Image</label>
+                <div
+                  onDragOver={handleHeroImageDragOver}
+                  onDrop={handleHeroImageDrop}
+                  className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer"
+                >
+                  {heroImagePreview ? (
+                    <div className="relative">
+                      <img src={(heroImagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
+                      <button
+                        type="button"
+                        onClick={removeHeroImage}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="file"
+                        id="hero-image-upload"
+                        accept="image/*"
+                        onChange={handleHeroImageUpload}
+                        className="hidden"
+                      />
+                      <label htmlFor="hero-image-upload" className="cursor-pointer text-blue-600 hover:underline">
+                        Click to upload or drag and drop a hero image here
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowHeroImageUploadModal(false);
+                    setHeroImagePreview(null);
+                  }}
+                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading || !heroImagePreview}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {uploading ? 'Uploading...' : 'Upload Image'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Main Dashboard Content */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0 flex items-center">
                 <h1 className="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
-            </div>
+              </div>
               <button
                 onClick={goToHomepage}
                 className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center transition-colors duration-200"
@@ -674,9 +752,9 @@ const AdminDashboard = () => {
               </button>
             </div>
           </div>
-          </div>
         </div>
-        
+      </div>
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow">
           <div className="border-b border-gray-200">
@@ -737,7 +815,7 @@ const AdminDashboard = () => {
                 Customer Accounts
               </button>
             </nav>
-            </div>
+          </div>
 
           <div className="p-6">
             {activeTab === 'overview' && <OverviewTab />}
@@ -767,8 +845,8 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-        </div>
-                    <div>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700">Price (₹)</label>
                   <input
                     type="number"
@@ -777,8 +855,8 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                    </div>
-                    <div>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700">Weight</label>
                   <input
                     type="text"
@@ -787,7 +865,7 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                    </div>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Description</label>
                   <textarea
@@ -847,14 +925,14 @@ const AdminDashboard = () => {
                     {imagePreview ? (
                       <div className="relative">
                         <img src={(imagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
-                    <button
+                        <button
                           type="button"
                           onClick={removeImage}
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                    >
+                        >
                           ✕
-                    </button>
-        </div>
+                        </button>
+                      </div>
                     ) : (
                       <div>
                         <input
@@ -867,9 +945,9 @@ const AdminDashboard = () => {
                         <label htmlFor="product-image" className="cursor-pointer text-blue-600 hover:underline">
                           Click to upload or drag and drop an image here
                         </label>
-      </div>
+                      </div>
                     )}
-    </div>
+                  </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <button
@@ -914,8 +992,8 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-      </div>
-                  <div>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700">Tagline</label>
                   <textarea
                     value={homepageSettingsFormData.tagline ?? ''}
@@ -924,8 +1002,8 @@ const AdminDashboard = () => {
                     rows={3}
                     required
                   />
-                  </div>
-                  <div>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700">Order Deadline Text</label>
                   <input
                     type="text"
@@ -934,7 +1012,7 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                  </div>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Delivery Info Text</label>
                   <input
@@ -944,7 +1022,7 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                  </div>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Menu Section Title</label>
                   <input
@@ -977,14 +1055,14 @@ const AdminDashboard = () => {
                     {heroImagePreview ? (
                       <div className="relative">
                         <img src={(heroImagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
-                  <button
+                        <button
                           type="button"
                           onClick={removeHeroImage}
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                  >
+                        >
                           ✕
-                  </button>
-      </div>
+                        </button>
+                      </div>
                     ) : (
                       <div>
                         <input
@@ -1028,7 +1106,145 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {/* Order Details Modal */}
+      {showOrderDetailsModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Order Details - {selectedOrder.order_number}</h3>
+              <button
+                onClick={() => {
+                  setShowOrderDetailsModal(false);
+                  setSelectedOrder(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Order Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Order Number</label>
+                  <p className="mt-1 text-sm text-gray-900 font-medium">{selectedOrder.order_number}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Order Date</label>
+                  <p className="mt-1 text-sm text-gray-900">{new Date(selectedOrder.order_date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Delivery Date</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedOrder.delivery_date ? new Date(selectedOrder.delivery_date).toLocaleDateString() : 'Not set'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <p className="mt-1">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
+                      {getStatusDisplayName(selectedOrder.status)}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Payment Status</label>
+                  <p className="mt-1">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      selectedOrder.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {selectedOrder.payment_status === 'paid' ? 'Paid' : 'Pending'}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Total Amount</label>
+                  <p className="mt-1 text-sm text-gray-900 font-semibold">₹{selectedOrder.total}</p>
+                </div>
+              </div>
 
+              {/* Customer Information */}
+              <div className="border-t pt-4">
+                <h4 className="text-md font-medium text-gray-900 mb-3">Customer Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Name</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_phone}</p>
+                  </div>
+                  {selectedOrder.customer_email && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Email</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_email}</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Address</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_address}, {selectedOrder.customer_pincode}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="border-t pt-4">
+                <h4 className="text-md font-medium text-gray-900 mb-3">Order Items</h4>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  {Array.isArray(selectedOrder.items) ? (
+                    <div className="space-y-3">
+                      {selectedOrder.items.map((item: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                          <div>
+                            <p className="font-medium text-gray-900">{item.name}</p>
+                            <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                            {item.weight && <p className="text-sm text-gray-500">Weight: {item.weight}</p>}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-900">₹{item.price}</p>
+                            <p className="text-sm text-gray-500">Total: ₹{item.price * item.quantity}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No items found</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Order Timeline */}
+              <div className="border-t pt-4">
+                <h4 className="text-md font-medium text-gray-900 mb-3">Order Timeline</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center text-sm">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                    <span className="text-gray-600">Order placed on {new Date(selectedOrder.created_at).toLocaleString()}</span>
+                  </div>
+                  {selectedOrder.updated_at !== selectedOrder.created_at && (
+                    <div className="flex items-center text-sm">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      <span className="text-gray-600">Last updated on {new Date(selectedOrder.updated_at).toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => {
+                  setShowOrderDetailsModal(false);
+                  setSelectedOrder(null);
+                }}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -1555,591 +1771,6 @@ const AdminDashboard = () => {
     </div>
   );
   }
-
-  // Hero Image Upload Modal
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Image Upload Modal */}
-      {showHeroImageUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Upload Hero Image</h3>
-              <button
-                onClick={() => {
-                  setShowHeroImageUploadModal(false);
-                  setHeroImagePreview(null);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <form onSubmit={handleHeroImageUploadSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Hero Image</label>
-                <div
-                  onDragOver={handleHeroImageDragOver}
-                  onDrop={handleHeroImageDrop}
-                  className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer"
-                >
-                  {heroImagePreview ? (
-                    <div className="relative">
-                      <img src={(heroImagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
-              <button
-                        type="button"
-                        onClick={removeHeroImage}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                      >
-                        ✕
-              </button>
-        </div>
-                  ) : (
-                    <div>
-                      <input
-                        type="file"
-                        id="hero-image-upload"
-                        accept="image/*"
-                        onChange={handleHeroImageUpload}
-                        className="hidden"
-                      />
-                      <label htmlFor="hero-image-upload" className="cursor-pointer text-blue-600 hover:underline">
-                        Click to upload or drag and drop a hero image here
-                      </label>
-          </div>
-        )}
-                </div>
-      </div>
-
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowHeroImageUploadModal(false);
-                    setHeroImagePreview(null);
-                  }}
-                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={uploading || !heroImagePreview}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {uploading ? 'Uploading...' : 'Upload Image'}
-                </button>
-              </div>
-            </form>
-            </div>
-                </div>
-      )}
-
-      {/* Main Dashboard Content */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
-              </div>
-              <button
-                onClick={goToHomepage}
-                className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center transition-colors duration-200"
-              >
-                <Home className="h-4 w-4 mr-2" />
-                View Homepage
-              </button>
-                      </div>
-                    </div>
-                </div>
-              </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 px-6">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'overview'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Package className="h-5 w-5 inline mr-2" />
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('products')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'products'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Package className="h-5 w-5 inline mr-2" />
-                Products
-              </button>
-              <button
-                onClick={() => setActiveTab('orders')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'orders'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <ShoppingCart className="h-5 w-5 inline mr-2" />
-                Orders
-              </button>
-              <button
-                onClick={() => setActiveTab('homepage')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'homepage'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Settings className="h-5 w-5 inline mr-2" />
-                Homepage Settings
-              </button>
-            </nav>
-                </div>
-
-          <div className="p-6">
-            {activeTab === 'overview' && <OverviewTab />}
-            {activeTab === 'products' && <ProductsTab />}
-            {activeTab === 'orders' && <OrdersTab />}
-            {activeTab === 'homepage' && <HomepageSettingsTab />}
-              </div>
-            </div>
-          </div>
-
-      {/* Product Modal */}
-      {showProductModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {editingProduct ? 'Edit Product' : 'Add New Product'}
-              </h3>
-              <form onSubmit={handleProductSubmit} className="space-y-4">
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                <input
-                  type="text"
-                  value={productFormData.name}
-                  onChange={(e) => setProductFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  required
-                />
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Price (₹)</label>
-                <input
-                  type="number"
-                  value={productFormData.price}
-                    onChange={(e) => setProductFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  required
-                />
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Weight</label>
-                <input
-                  type="text"
-                  value={productFormData.weight}
-                  onChange={(e) => setProductFormData(prev => ({ ...prev, weight: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  required
-                />
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  value={productFormData.description}
-                  onChange={(e) => setProductFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  rows={3}
-                    required
-                />
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Stock</label>
-                <input
-                  type="number"
-                  value={productFormData.stock}
-                    onChange={(e) => setProductFormData(prev => ({ ...prev, stock: parseInt(e.target.value) || 0 }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  required
-                />
-              </div>
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={productFormData.is_bestseller}
-                  onChange={(e) => setProductFormData(prev => ({ ...prev, is_bestseller: e.target.checked }))}
-                      className="mr-2"
-                    />
-                    Best Seller
-                  </label>
-                  <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={productFormData.is_new}
-                  onChange={(e) => setProductFormData(prev => ({ ...prev, is_new: e.target.checked }))}
-                      className="mr-2"
-                    />
-                    New
-                  </label>
-                  <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={productFormData.is_active}
-                  onChange={(e) => setProductFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                      className="mr-2"
-                />
-                    Active
-                  </label>
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Product Image</label>
-                <div
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer"
-                >
-                  {imagePreview ? (
-                    <div className="relative">
-                      <img src={(imagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
-                      <button
-                        type="button"
-                        onClick={removeImage}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                          id="product-image"
-                      />
-                      <label htmlFor="product-image" className="cursor-pointer text-blue-600 hover:underline">
-                        Click to upload or drag and drop an image here
-                      </label>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowProductModal(false)}
-                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={uploading}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
-                >
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                  )}
-                    {editingProduct ? 'Update' : 'Create'}
-                </button>
-              </div>
-            </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Homepage Settings Modal */}
-      {showHomepageSettingsModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Homepage Settings</h3>
-              <form onSubmit={handleHomepageSettingsSubmit} className="space-y-4">
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Brand Name</label>
-                <input
-                  type="text"
-                  value={homepageSettingsFormData.brand_name ?? ''}
-                  onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, brand_name: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  required
-                />
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Tagline</label>
-                <textarea
-                  value={homepageSettingsFormData.tagline ?? ''}
-                  onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, tagline: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  rows={3}
-                  required
-                />
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Order Deadline Text</label>
-                <input
-                  type="text"
-                  value={homepageSettingsFormData.order_deadline_text ?? ''}
-                  onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, order_deadline_text: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  required
-                />
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Delivery Info Text</label>
-                <input
-                  type="text"
-                  value={homepageSettingsFormData.delivery_info_text ?? ''}
-                  onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, delivery_info_text: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  required
-                />
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-gray-700">Menu Section Title</label>
-                  <input
-                    type="text"
-                    value={homepageSettingsFormData.menu_title ?? ''}
-                    onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, menu_title: e.target.value }))}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Serviceable Pincodes</label>
-                  <textarea
-                    value={homepageSettingsFormData.serviceable_pincodes ?? ''}
-                    onChange={(e) => setHomepageSettingsFormData(prev => ({ ...prev, serviceable_pincodes: e.target.value }))}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    rows={3}
-                    placeholder="Enter pincodes separated by commas (e.g., 110001, 110002, 110003)"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Enter pincodes separated by commas where you deliver</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Hero Image</label>
-                <div
-                  onDragOver={handleHeroImageDragOver}
-                  onDrop={handleHeroImageDrop}
-                  className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer"
-                >
-                  {heroImagePreview ? (
-                    <div className="relative">
-                      <img src={(heroImagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
-                      <button
-                        type="button"
-                        onClick={removeHeroImage}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <input
-                        type="file"
-                        id="hero-image"
-                        accept="image/*"
-                        onChange={handleHeroImageUpload}
-                        className="hidden"
-                      />
-                      <label htmlFor="hero-image" className="cursor-pointer text-blue-600 hover:underline">
-                        Click to upload or drag and drop a hero image here
-                      </label>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowHomepageSettingsModal(false)}
-                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={uploading}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
-                >
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                  )}
-                  Save Settings
-                </button>
-              </div>
-            </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Order Details Modal */}
-      {showOrderDetailsModal && selectedOrder && (() => {
-        // Type guard to ensure selectedOrder is not null
-        if (!selectedOrder) return null;
-        
-        return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Order Details - {selectedOrder.order_number}</h3>
-              <button
-                onClick={() => {
-                  setShowOrderDetailsModal(false);
-                  setSelectedOrder(null);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div className="space-y-6">
-              {/* Order Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Order Number</label>
-                  <p className="mt-1 text-sm text-gray-900 font-medium">{selectedOrder.order_number}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Order Date</label>
-                  <p className="mt-1 text-sm text-gray-900">{new Date(selectedOrder.order_date).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Delivery Date</label>
-                  <p className="mt-1 text-sm text-gray-900">{selectedOrder.delivery_date ? new Date(selectedOrder.delivery_date).toLocaleDateString() : 'Not set'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <p className="mt-1">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
-                      {getStatusDisplayName(selectedOrder.status)}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Payment Status</label>
-                  <p className="mt-1">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      selectedOrder.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {selectedOrder.payment_status === 'paid' ? 'Paid' : 'Pending'}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Total Amount</label>
-                  <p className="mt-1 text-sm text-gray-900 font-semibold">₹{selectedOrder.total}</p>
-                </div>
-              </div>
-
-              {/* Customer Information */}
-              <div className="border-t pt-4">
-                <h4 className="text-md font-medium text-gray-900 mb-3">Customer Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_name}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_phone}</p>
-                  </div>
-                  {selectedOrder.customer_email && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Email</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_email}</p>
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Address</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedOrder.customer_address}, {selectedOrder.customer_pincode}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Order Items */}
-              <div className="border-t pt-4">
-                <h4 className="text-md font-medium text-gray-900 mb-3">Order Items</h4>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  {Array.isArray(selectedOrder.items) ? (
-                    <div className="space-y-3">
-                      {selectedOrder.items.map((item: any, index: number) => (
-                        <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-                          <div>
-                            <p className="font-medium text-gray-900">{item.name}</p>
-                            <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
-                            {item.weight && <p className="text-sm text-gray-500">Weight: {item.weight}</p>}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium text-gray-900">₹{item.price}</p>
-                            <p className="text-sm text-gray-500">Total: ₹{item.price * item.quantity}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No items found</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Order Timeline */}
-              <div className="border-t pt-4">
-                <h4 className="text-md font-medium text-gray-900 mb-3">Order Timeline</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center text-sm">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                    <span className="text-gray-600">Order placed on {new Date(selectedOrder.created_at).toLocaleString()}</span>
-                  </div>
-                  {selectedOrder.updated_at !== selectedOrder.created_at && (
-                    <div className="flex items-center text-sm">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                      <span className="text-gray-600">Last updated on {new Date(selectedOrder.updated_at).toLocaleString()}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={() => {
-                  setShowOrderDetailsModal(false);
-                  setSelectedOrder(null);
-                }}
-                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 };
 
 export default AdminDashboard;
