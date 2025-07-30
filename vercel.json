@@ -1,5 +1,16 @@
 {
-  "rewrites": [
+  "version": 2,
+  "name": "ebbys-bakery",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
     {
       "source": "/(.*)",
       "destination": "/index.html"
@@ -20,8 +31,33 @@
         {
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     }
-  ]
+  ],
+  "env": {
+    "VITE_ENV": "production"
+  },
+  "functions": {
+    "supabase/functions/send-email/index.ts": {
+      "runtime": "nodejs18.x"
+    }
+  }
 } 

@@ -11,9 +11,13 @@
     "build": "tsc && vite build",
     "build:staging": "tsc && vite build --mode staging",
     "build:test": "tsc && vite build --mode test",
+    "build:production": "tsc && vite build --mode production",
     "preview": "vite preview",
     "preview:staging": "vite preview --mode staging",
     "preview:test": "vite preview --mode test",
+    "preview:production": "vite preview --mode production",
+    "deploy:staging": "npm run build:staging && vercel --prod --target staging",
+    "deploy:production": "npm run build:production && vercel --prod",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "echo \"No tests specified\" && exit 0",
     "test:e2e": "echo \"E2E tests not configured\" && exit 0"
