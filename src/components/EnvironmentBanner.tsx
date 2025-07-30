@@ -4,8 +4,18 @@ import { getEnvironmentName, isDevelopment, isStaging, isTest } from '../lib/env
 const EnvironmentBanner: React.FC = () => {
   const envName = getEnvironmentName();
   
+  // Debug logging
+  console.log('EnvironmentBanner Debug:', {
+    envName,
+    isDevelopment: isDevelopment(),
+    isStaging: isStaging(),
+    isTest: isTest(),
+    shouldShow: !(isDevelopment() && !isStaging() && !isTest())
+  });
+  
   // Don't show banner in production
   if (isDevelopment() && !isStaging() && !isTest()) {
+    console.log('EnvironmentBanner: Not showing (development mode)');
     return null;
   }
 
@@ -24,6 +34,8 @@ const EnvironmentBanner: React.FC = () => {
     if (isTest()) return '🧪';
     return '⚙️';
   };
+
+  console.log('EnvironmentBanner: Showing banner for', envName);
 
   return (
     <div className={`${getBannerStyle()} px-4 py-2 text-center text-sm font-medium`}>

@@ -78,8 +78,11 @@ const TestDataManager: React.FC = () => {
       // Generate test order
       const testOrder = {
         order_number: `TEST-${Date.now()}`,
-        customer_id: customer.id,
-        total_amount: 1050,
+        customer_name: customer.name,
+        customer_phone: customer.phone,
+        customer_address: customer.address,
+        customer_pincode: customer.pincode,
+        total: 1050,
         status: 'pending',
         items: JSON.stringify([
           { name: 'Chocolate Cake', quantity: 2, price: 500 },

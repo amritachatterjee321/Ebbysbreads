@@ -17,6 +17,16 @@ export interface EnvironmentConfig {
 export const getEnvironmentConfig = (): EnvironmentConfig => {
   const env = import.meta.env.VITE_ENV || 'development';
   
+  // Debug logging
+  console.log('Environment Config Debug:', {
+    VITE_ENV: import.meta.env.VITE_ENV,
+    VITE_APP_NAME: import.meta.env.VITE_APP_NAME,
+    env,
+    DEV: import.meta.env.DEV,
+    PROD: import.meta.env.PROD,
+    MODE: import.meta.env.MODE
+  });
+  
   return {
     env,
     appName: import.meta.env.VITE_APP_NAME || 'Ebby\'s Bakery',

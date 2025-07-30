@@ -354,7 +354,6 @@ export const AppProvider = ({ children }: AppProviderProps) => {
         order_number: orderNumber,
         customer_name: customerData.name,
         customer_phone: customerData.phone,
-        customer_email: customerData.email || undefined,
         customer_address: customerData.address,
         customer_pincode: customerData.pincode,
         items: cart.map(item => ({
