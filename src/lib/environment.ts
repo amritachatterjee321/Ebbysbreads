@@ -30,8 +30,9 @@ export const getEnvironmentConfig = (): EnvironmentConfig => {
   return {
     env,
     appName: import.meta.env.VITE_APP_NAME || 'Ebby\'s Bakery',
-    supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
-    supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+    // Check for both VITE_ prefixed and standard environment variable names
+    supabaseUrl: import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || '',
+    supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY || '',
     emailService: import.meta.env.VITE_EMAIL_SERVICE || 'log',
     enableEmailNotifications: import.meta.env.VITE_ENABLE_EMAIL_NOTIFICATIONS === 'true',
     enableAnalytics: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',

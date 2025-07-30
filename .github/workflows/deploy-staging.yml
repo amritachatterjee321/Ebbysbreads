@@ -25,8 +25,8 @@ jobs:
       run: npm run build:staging
       env:
         VITE_ENV: staging
-        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL_STAGING }}
-        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY_STAGING }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_STAGING }}
         VITE_EMAIL_SERVICE: log
         VITE_ENABLE_EMAIL_NOTIFICATIONS: true
     

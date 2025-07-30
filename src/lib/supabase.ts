@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+// Check for both VITE_ prefixed and standard environment variable names
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY || 'your-anon-key';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -13,14 +14,11 @@ export interface Database {
         Row: {
           id: number;
           name: string;
-          price: number;
-          weight: string;
-          image_url: string;
           description: string;
-          stock: number;
-          is_bestseller: boolean;
-          is_new: boolean;
-          is_active: boolean;
+          price: number;
+          image_url: string;
+          category: string;
+          available: boolean;
           sort_order: number;
           created_at: string;
           updated_at: string;
@@ -28,14 +26,11 @@ export interface Database {
         Insert: {
           id?: number;
           name: string;
-          price: number;
-          weight: string;
-          image_url?: string;
           description: string;
-          stock: number;
-          is_bestseller?: boolean;
-          is_new?: boolean;
-          is_active?: boolean;
+          price: number;
+          image_url: string;
+          category: string;
+          available?: boolean;
           sort_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -43,14 +38,11 @@ export interface Database {
         Update: {
           id?: number;
           name?: string;
-          price?: number;
-          weight?: string;
-          image_url?: string;
           description?: string;
-          stock?: number;
-          is_bestseller?: boolean;
-          is_new?: boolean;
-          is_active?: boolean;
+          price?: number;
+          image_url?: string;
+          category?: string;
+          available?: boolean;
           sort_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -58,142 +50,73 @@ export interface Database {
       };
       orders: {
         Row: {
-          id: string;
-          order_number: string;
+          id: number;
           customer_name: string;
           customer_phone: string;
-          customer_email?: string;
           customer_address: string;
           customer_pincode: string;
-          items: any;
           total: number;
-          status: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled';
-          payment_status: 'pending' | 'paid';
-          order_date: string;
-          delivery_date: string;
+          status: string;
           created_at: string;
           updated_at: string;
         };
         Insert: {
-          id?: string;
-          order_number: string;
+          id?: number;
           customer_name: string;
           customer_phone: string;
-          customer_email?: string;
           customer_address: string;
           customer_pincode: string;
-          items: any;
           total: number;
-          status?: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled';
-          payment_status?: 'pending' | 'paid';
-          order_date?: string;
-          delivery_date?: string;
+          status?: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
-          id?: string;
-          order_number?: string;
+          id?: number;
           customer_name?: string;
           customer_phone?: string;
-          customer_email?: string;
           customer_address?: string;
           customer_pincode?: string;
-          items?: any;
           total?: number;
-          status?: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled';
-          payment_status?: 'pending' | 'paid';
-          order_date?: string;
-          delivery_date?: string;
+          status?: string;
           created_at?: string;
           updated_at?: string;
         };
       };
       customers: {
         Row: {
-          id: string;
+          id: number;
           name: string;
+          email: string;
           phone: string;
-          email?: string;
           address: string;
           pincode: string;
           created_at: string;
-          updated_at: string;
         };
         Insert: {
-          id?: string;
+          id?: number;
           name: string;
+          email: string;
           phone: string;
-          email?: string;
           address: string;
           pincode: string;
           created_at?: string;
-          updated_at?: string;
         };
         Update: {
-          id?: string;
+          id?: number;
           name?: string;
-          phone?: string;
           email?: string;
+          phone?: string;
           address?: string;
           pincode?: string;
           created_at?: string;
-          updated_at?: string;
-        };
-      };
-      homepage_settings: {
-        Row: {
-          id: number;
-          brand_name: string;
-          hero_image_url: string | null;
-          tagline: string;
-          order_deadline_text: string;
-          delivery_info_text: string;
-          menu_title: string;
-          serviceable_pincodes: string;
-          about_title: string | null;
-          about_content: string | null;
-          about_image_url: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: number;
-          brand_name: string;
-          hero_image_url?: string | null;
-          tagline: string;
-          order_deadline_text: string;
-          delivery_info_text: string;
-          menu_title?: string;
-          serviceable_pincodes?: string;
-          about_title?: string | null;
-          about_content?: string | null;
-          about_image_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: number;
-          brand_name?: string;
-          hero_image_url?: string | null;
-          tagline?: string;
-          order_deadline_text?: string;
-          delivery_info_text?: string;
-          menu_title?: string;
-          serviceable_pincodes?: string;
-          about_title?: string | null;
-          about_content?: string | null;
-          about_image_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
         };
       };
       user_profiles: {
         Row: {
           id: string;
           email: string;
-          name: string | null;
-          avatar_url: string | null;
+          full_name: string;
           role: string;
           created_at: string;
           updated_at: string;
@@ -201,8 +124,7 @@ export interface Database {
         Insert: {
           id: string;
           email: string;
-          name?: string | null;
-          avatar_url?: string | null;
+          full_name: string;
           role?: string;
           created_at?: string;
           updated_at?: string;
@@ -210,11 +132,74 @@ export interface Database {
         Update: {
           id?: string;
           email?: string;
-          name?: string | null;
-          avatar_url?: string | null;
+          full_name?: string;
           role?: string;
           created_at?: string;
           updated_at?: string;
+        };
+      };
+      homepage_settings: {
+        Row: {
+          id: number;
+          hero_title: string;
+          hero_subtitle: string;
+          hero_image_url: string;
+          about_text: string;
+          contact_email: string;
+          contact_phone: string;
+          contact_address: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          hero_title: string;
+          hero_subtitle: string;
+          hero_image_url: string;
+          about_text: string;
+          contact_email: string;
+          contact_phone: string;
+          contact_address: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          hero_title?: string;
+          hero_subtitle?: string;
+          hero_image_url?: string;
+          about_text?: string;
+          contact_email?: string;
+          contact_phone?: string;
+          contact_address?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      serviceable_pincodes: {
+        Row: {
+          id: number;
+          pincode: string;
+          city: string;
+          state: string;
+          delivery_available: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          pincode: string;
+          city: string;
+          state: string;
+          delivery_available?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          pincode?: string;
+          city?: string;
+          state?: string;
+          delivery_available?: boolean;
+          created_at?: string;
         };
       };
     };
