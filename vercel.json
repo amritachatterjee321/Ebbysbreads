@@ -54,10 +54,5 @@
   ],
   "env": {
     "VITE_ENV": "production"
-  },
-  "functions": {
-    "supabase/functions/send-email/index.ts": {
-      "runtime": "nodejs18.x"
-    }
   }
 } 
