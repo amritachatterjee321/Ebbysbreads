@@ -44,11 +44,11 @@ export const getEnvironmentConfig = (): EnvironmentConfig => {
 };
 
 export const isDevelopment = (): boolean => {
-  return import.meta.env.DEV;
+  return import.meta.env.VITE_ENV === 'development' || (!import.meta.env.VITE_ENV && import.meta.env.DEV);
 };
 
 export const isProduction = (): boolean => {
-  return import.meta.env.PROD;
+  return import.meta.env.VITE_ENV === 'production';
 };
 
 export const isStaging = (): boolean => {

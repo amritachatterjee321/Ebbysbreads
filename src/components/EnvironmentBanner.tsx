@@ -10,12 +10,12 @@ const EnvironmentBanner: React.FC = () => {
     isDevelopment: isDevelopment(),
     isStaging: isStaging(),
     isTest: isTest(),
-    shouldShow: !(isDevelopment() && !isStaging() && !isTest())
+    shouldShow: isStaging() || isTest()
   });
   
-  // Don't show banner in production
-  if (isDevelopment() && !isStaging() && !isTest()) {
-    console.log('EnvironmentBanner: Not showing (development mode)');
+  // Only show banner for staging and test environments
+  if (!isStaging() && !isTest()) {
+    console.log('EnvironmentBanner: Not showing (production/development mode)');
     return null;
   }
 
