@@ -6,9 +6,17 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
+    "dev:staging": "vite --mode staging",
+    "dev:test": "vite --mode test",
     "build": "tsc && vite build",
+    "build:staging": "tsc && vite build --mode staging",
+    "build:test": "tsc && vite build --mode test",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "preview:staging": "vite preview --mode staging",
+    "preview:test": "vite preview --mode test",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "test": "echo \"No tests specified\" && exit 0",
+    "test:e2e": "echo \"E2E tests not configured\" && exit 0"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

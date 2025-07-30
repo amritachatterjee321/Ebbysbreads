@@ -24,6 +24,8 @@ import { productService, homepageSettingsService, orderService, customerService 
 import { simpleEmailService } from './services/email-simple';
 import { supabase } from './lib/supabase';
 import { PincodeInput } from './components/PincodeInput';
+import EnvironmentBanner from './components/EnvironmentBanner';
+import TestDataManager from './components/TestDataManager';
 import { PincodeValidationResult } from './services/pincode';
 
 // --- src/types/index.ts ---
@@ -608,12 +610,6 @@ const Homepage = () => {
                     <span className="hidden sm:inline">Admin</span>
                   </Button>
                 </Link>
-                <Link to="/test-email-simple">
-                  <Button variant="outline" size="sm" className="border-blue-300 text-blue-700 hover:bg-blue-50 px-2 sm:px-3">
-                    <Mail className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Test Email</span>
-                  </Button>
-                </Link>
               </div>
             </div>
             {pincodeValidation && pincodeValidation.isValid && pincodeValidation.isServiceable && (
@@ -1194,7 +1190,20 @@ const AccountPage = () => {
                               {!errors.phone && values.phone.length > 0 && values.phone.length < 10 && (
                                 <p className="text-orange-600 text-xs mt-1">📱 Please enter a complete 10-digit phone number</p>
                               )}
-
+                              {/* Debug info - remove in production */}
+                              <div className="mt-1 text-xs text-gray-400">
+                                Debug: Phone length: {values.phone.length}, Existing: {existingCustomerFound.toString()}
+                              </div>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  console.log('🔍 Test button clicked');
+                                  setValues(prev => ({ ...prev, phone: '9560487800' }));
+                                }}
+                                className="text-xs text-blue-600 underline"
+                              >
+                                Test: Set to 10 digits
+                              </button>
                             </div>
                         </div>
                         <div><Label htmlFor="email">Email Address *</Label><Input id="email" type="email" placeholder="your.email@example.com" value={values.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('email', e.target.value)} className={errors.email ? 'border-red-500' : ''} />{errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}</div>
@@ -1265,7 +1274,9 @@ const PageRenderer = () => {
 export default function EbbysBakeryFlow() {
   return (
     <AppProvider>
+      <EnvironmentBanner />
       <PageRenderer />
+      <TestDataManager />
     </AppProvider>
   );
 }

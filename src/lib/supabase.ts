@@ -71,7 +71,6 @@ export interface Database {
           payment_status: 'pending' | 'paid';
           order_date: string;
           delivery_date: string;
-          is_archived: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -89,7 +88,6 @@ export interface Database {
           payment_status?: 'pending' | 'paid';
           order_date?: string;
           delivery_date?: string;
-          is_archived?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -107,7 +105,6 @@ export interface Database {
           payment_status?: 'pending' | 'paid';
           order_date?: string;
           delivery_date?: string;
-          is_archived?: boolean;
           created_at?: string;
           updated_at?: string;
         };
