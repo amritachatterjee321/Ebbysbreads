@@ -11,534 +11,355 @@ type OrderUpdate = Database['public']['Tables']['orders']['Update'];
 
 type Customer = Database['public']['Tables']['customers']['Row'];
 type CustomerInsert = Database['public']['Tables']['customers']['Insert'];
+type CustomerUpdate = Database['public']['Tables']['customers']['Update'];
 
 type HomepageSettings = Database['public']['Tables']['homepage_settings']['Row'];
 type HomepageSettingsInsert = Database['public']['Tables']['homepage_settings']['Insert'];
 type HomepageSettingsUpdate = Database['public']['Tables']['homepage_settings']['Update'];
 
-// Product Services
-export const productService = {
-  async getAll(): Promise<Product[]> {
+type ServiceablePincode = Database['public']['Tables']['serviceable_pincodes']['Row'];
+type ServiceablePincodeInsert = Database['public']['Tables']['serviceable_pincodes']['Insert'];
+type ServiceablePincodeUpdate = Database['public']['Tables']['serviceable_pincodes']['Update'];
+
+export const databaseService = {
+  // Product operations
+  async getProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
+      .order('sort_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching products:', error);
+      return [];
+    }
+
     return data || [];
   },
 
-  async getActive(): Promise<Product[]> {
-    console.log('Fetching active products from database...');
+  async getActiveProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false });
-    
+      .order('sort_order', { ascending: true });
+
     if (error) {
       console.error('Error fetching active products:', error);
-      throw error;
+      return [];
     }
-    console.log('Active products fetched:', data);
-    console.log('Number of active products:', data?.length || 0);
-    if (data && data.length > 0) {
-      console.log('First product details:', data[0]);
-    }
+
     return data || [];
   },
 
-  async getById(id: number): Promise<Product | null> {
+  async getProduct(id: number): Promise<Product | null> {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('id', id)
       .single();
-    
-    if (error) throw error;
+
+    if (error) {
+      console.error('Error fetching product:', error);
+      return null;
+    }
+
     return data;
   },
 
-  async create(product: ProductInsert): Promise<Product> {
-    // Get the next sort order if not provided
-    if (!product.sort_order) {
-      product.sort_order = await this.getNextSortOrder();
-    }
-    
+  async createProduct(product: ProductInsert): Promise<{ data: Product | null; error: any }> {
     const { data, error } = await supabase
       .from('products')
       .insert(product)
       .select()
       .single();
-    
-    if (error) throw error;
-    return data;
+
+    if (error) {
+      console.error('Error creating product:', error);
+    }
+
+    return { data, error };
   },
 
-  async update(id: number, updates: ProductUpdate): Promise<Product> {
-    console.log('Updating product:', id, 'with updates:', updates);
+  async updateProduct(id: number, updates: ProductUpdate): Promise<{ data: Product | null; error: any }> {
     const { data, error } = await supabase
       .from('products')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) {
       console.error('Error updating product:', error);
-      throw error;
     }
-    console.log('Product updated successfully:', data);
-    return data;
+
+    return { data, error };
   },
 
-  async delete(id: number): Promise<void> {
+  async deleteProduct(id: number): Promise<{ error: any }> {
     const { error } = await supabase
       .from('products')
       .delete()
       .eq('id', id);
-    
-    if (error) throw error;
+
+    if (error) {
+      console.error('Error deleting product:', error);
+    }
+
+    return { error };
   },
 
-  async toggleActive(id: number): Promise<Product> {
-    const product = await this.getById(id);
-    if (!product) throw new Error('Product not found');
-    
-    return this.update(id, { is_active: !product.is_active });
+  async toggleProductActive(id: number): Promise<{ data: Product | null; error: any }> {
+    const product = await this.getProduct(id);
+    if (!product) {
+      return { data: null, error: 'Product not found' };
+    }
+
+    return this.updateProduct(id, { is_active: !product.is_active });
   },
 
-  async reorderProducts(productIds: number[]): Promise<void> {
-    console.log('Reordering products:', productIds);
-    
-    if (!productIds || productIds.length === 0) {
-      console.warn('No product IDs provided for reordering');
-      return;
-    }
-    
-    try {
-      // Update sort_order for each product based on the new order
-      const updates = productIds.map((id, index) => ({
-        id,
-        sort_order: index + 1
-      }));
-
-      console.log('Updates to be applied:', updates);
-
-      // Perform batch update using individual updates instead of upsert
-      for (const update of updates) {
-        console.log(`Updating product ${update.id} with sort_order ${update.sort_order}`);
-        const { error } = await supabase
-          .from('products')
-          .update({ sort_order: update.sort_order, updated_at: new Date().toISOString() })
-          .eq('id', update.id);
-        
-        if (error) {
-          console.error(`Error updating product ${update.id}:`, error);
-          throw new Error(`Failed to update product ${update.id}: ${error.message}`);
-        }
-      }
-      
-      console.log('Products reordered successfully');
-    } catch (error) {
-      console.error('Error in reorderProducts:', error);
-      throw error;
-    }
-  },
-
-  async getNextSortOrder(): Promise<number> {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('sort_order')
-        .order('sort_order', { ascending: false })
-        .limit(1);
-      
-      if (error) {
-        console.warn('Error getting next sort order, using fallback:', error);
-        // Fallback: use the highest ID + 1
-        const { data: idData, error: idError } = await supabase
-          .from('products')
-          .select('id')
-          .order('id', { ascending: false })
-          .limit(1);
-        
-        if (idError) throw idError;
-        return (idData?.[0]?.id || 0) + 1;
-      }
-      
-      return (data?.[0]?.sort_order || 0) + 1;
-    } catch (error) {
-      console.error('Error in getNextSortOrder:', error);
-      throw error;
-    }
-  },
-
-  async checkSortOrderColumn(): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('products')
-        .select('sort_order')
-        .limit(1);
-      
-      if (error) {
-        console.warn('sort_order column may not exist:', error);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error checking sort_order column:', error);
-      return false;
-    }
-  }
-};
-
-// Order Services
-export const orderService = {
-  async getAll(): Promise<Order[]> {
+  // Order operations
+  async getOrders(): Promise<Order[]> {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false });
-    
-    if (error) throw error;
+
+    if (error) {
+      console.error('Error fetching orders:', error);
+      return [];
+    }
+
     return data || [];
   },
 
-  async getById(id: string): Promise<Order | null> {
+  async getOrder(id: string): Promise<Order | null> {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
       .eq('id', id)
       .single();
-    
-    if (error) throw error;
+
+    if (error) {
+      console.error('Error fetching order:', error);
+      return null;
+    }
+
     return data;
   },
 
-  async getByOrderNumber(orderNumber: string): Promise<Order | null> {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('order_number', orderNumber)
-      .single();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async create(order: OrderInsert): Promise<Order> {
+  async createOrder(order: OrderInsert): Promise<{ data: Order | null; error: any }> {
     const { data, error } = await supabase
       .from('orders')
       .insert(order)
       .select()
       .single();
-    
-    if (error) throw error;
-    return data;
+
+    if (error) {
+      console.error('Error creating order:', error);
+    }
+
+    return { data, error };
   },
 
-  async update(id: string, updates: OrderUpdate): Promise<Order> {
+  async updateOrder(id: string, updates: OrderUpdate): Promise<{ data: Order | null; error: any }> {
     const { data, error } = await supabase
       .from('orders')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq('id', id)
       .select()
       .single();
-    
-    if (error) throw error;
-    return data;
+
+    if (error) {
+      console.error('Error updating order:', error);
+    }
+
+    return { data, error };
   },
 
-  async updateStatus(id: string, status: Order['status']): Promise<Order> {
-    return this.update(id, { status });
-  },
-
-  async getByStatus(status: Order['status']): Promise<Order[]> {
-    const { data, error } = await supabase
+  async deleteOrder(id: string): Promise<{ error: any }> {
+    const { error } = await supabase
       .from('orders')
-      .select('*')
-      .eq('status', status)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    return data || [];
-  }
-};
+      .delete()
+      .eq('id', id);
 
-// Customer Services
-export const customerService = {
-  async getAll(): Promise<Customer[]> {
+    if (error) {
+      console.error('Error deleting order:', error);
+    }
+
+    return { error };
+  },
+
+  // Customer operations
+  async getCustomers(): Promise<Customer[]> {
     const { data, error } = await supabase
       .from('customers')
       .select('*')
       .order('created_at', { ascending: false });
-    
-    if (error) throw error;
+
+    if (error) {
+      console.error('Error fetching customers:', error);
+      return [];
+    }
+
     return data || [];
   },
 
-  async getById(id: string): Promise<Customer | null> {
+  async getCustomer(id: string): Promise<Customer | null> {
     const { data, error } = await supabase
       .from('customers')
       .select('*')
       .eq('id', id)
       .single();
-    
-    if (error) throw error;
+
+    if (error) {
+      console.error('Error fetching customer:', error);
+      return null;
+    }
+
     return data;
   },
 
-  async getByPhone(phone: string): Promise<Customer | null> {
-    const { data, error } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('phone', phone)
-      .maybeSingle();
-    
-    if (error) throw error;
-    return data;
-  },
-
-  async isPhoneNumberTaken(phone: string): Promise<boolean> {
-    const customer = await this.getByPhone(phone);
-    return customer !== null;
-  },
-
-  async create(customer: CustomerInsert): Promise<Customer> {
+  async createCustomer(customer: CustomerInsert): Promise<{ data: Customer | null; error: any }> {
     const { data, error } = await supabase
       .from('customers')
       .insert(customer)
       .select()
       .single();
-    
+
     if (error) {
-      // Handle unique constraint violation specifically
-      if (error.code === '23505' && error.message.includes('phone')) {
-        throw new Error('A customer with this phone number already exists');
-      }
-      throw error;
+      console.error('Error creating customer:', error);
     }
-    return data;
+
+    return { data, error };
   },
 
-  async update(id: string, updates: Partial<Customer>): Promise<Customer> {
-    // Remove phone number from updates to prevent changes
-    const { phone, ...safeUpdates } = updates;
-    
-    if (phone !== undefined) {
-      console.warn('Phone number update attempted but blocked for customer ID:', id);
-    }
-    
+  async updateCustomer(id: string, updates: CustomerUpdate): Promise<{ data: Customer | null; error: any }> {
     const { data, error } = await supabase
       .from('customers')
-      .update({ ...safeUpdates, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq('id', id)
       .select()
       .single();
-    
-    if (error) throw error;
-    return data;
-  },
 
-  async createOrUpdate(customerData: CustomerInsert): Promise<Customer> {
-    // First try to find existing customer by phone number
-    const existingCustomer = await this.getByPhone(customerData.phone);
-    
-    if (existingCustomer) {
-      // Update existing customer with new information (EXCLUDING phone number)
-      return this.update(existingCustomer.id, {
-        name: customerData.name,
-        email: customerData.email,
-        address: customerData.address,
-        pincode: customerData.pincode
-        // Note: phone number is intentionally excluded to prevent changes
-      });
-    } else {
-      // Create new customer
-      try {
-        return await this.create(customerData);
-      } catch (error) {
-        // If creation fails due to unique constraint, try to find and update
-        if (error instanceof Error && error.message.includes('phone number already exists')) {
-          const retryCustomer = await this.getByPhone(customerData.phone);
-          if (retryCustomer) {
-            return this.update(retryCustomer.id, {
-              name: customerData.name,
-              email: customerData.email,
-              address: customerData.address,
-              pincode: customerData.pincode
-              // Note: phone number is intentionally excluded to prevent changes
-            });
-          }
-        }
-        throw error;
-      }
+    if (error) {
+      console.error('Error updating customer:', error);
     }
-  }
-};
 
-// File Upload Service
-export const fileService = {
-  async uploadImage(file: File, fileName: string): Promise<string> {
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(fileName, file);
-
-    if (uploadError) throw uploadError;
-
-    const { data } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(fileName);
-
-    return data.publicUrl;
+    return { data, error };
   },
 
-  async deleteImage(path: string): Promise<void> {
-    const { error } = await supabase.storage
-      .from('product-images')
-      .remove([path]);
+  async deleteCustomer(id: string): Promise<{ error: any }> {
+    const { error } = await supabase
+      .from('customers')
+      .delete()
+      .eq('id', id);
 
-    if (error) throw error;
-  }
-};
-
-// Analytics Service
-export const analyticsService = {
-  async getOrderStats() {
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select('total, status, created_at');
-
-    if (error) throw error;
-
-    const totalOrders = orders?.length || 0;
-    const totalRevenue = orders?.reduce((sum, order) => sum + order.total, 0) || 0;
-    const pendingOrders = orders?.filter(order => order.status === 'pending').length || 0;
-    const deliveredOrders = orders?.filter(order => order.status === 'delivered').length || 0;
-
-    return {
-      totalOrders,
-      totalRevenue,
-      pendingOrders,
-      deliveredOrders
-    };
-  },
-
-  async getProductStats() {
-    const { data: products, error } = await supabase
-      .from('products')
-      .select('is_active');
-
-    if (error) throw error;
-
-    const totalProducts = products?.length || 0;
-    const activeProducts = products?.filter(product => product.is_active).length || 0;
-
-    return {
-      totalProducts,
-      activeProducts
-    };
-  }
-};
-
-// Homepage Settings Service
-export const homepageSettingsService = {
-  async checkTableExists(): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('homepage_settings')
-        .select('id')
-        .limit(1);
-      
-      if (error) {
-        console.log('Table check error (might not exist):', error);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.log('Table does not exist:', error);
-      return false;
+    if (error) {
+      console.error('Error deleting customer:', error);
     }
+
+    return { error };
   },
 
-  async createTable(): Promise<void> {
-    console.log('Attempting to create homepage_settings table...');
-    // Note: This would require admin privileges in Supabase
-    // For now, we'll provide instructions to the user
-    throw new Error('Table homepage_settings does not exist. Please run the initialization SQL script in your Supabase dashboard.');
-  },
-  async get(): Promise<HomepageSettings | null> {
-    console.log('Fetching homepage settings...');
+  // Homepage settings operations
+  async getHomepageSettings(): Promise<HomepageSettings | null> {
     const { data, error } = await supabase
       .from('homepage_settings')
       .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1);
-    
+      .single();
+
     if (error) {
       console.error('Error fetching homepage settings:', error);
-      throw error;
-    }
-    
-    if (!data || data.length === 0) {
-      console.log('No homepage settings found');
       return null;
     }
-    
-    console.log('Homepage settings fetched successfully:', data[0]);
-    return data[0];
-  },
 
-  async update(id: number, settings: HomepageSettingsUpdate): Promise<HomepageSettings> {
-    console.log('Updating homepage settings:', id, settings);
-    const { data, error } = await supabase
-      .from('homepage_settings')
-      .update({ ...settings, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error updating homepage settings:', error);
-      throw error;
-    }
-    console.log('Homepage settings updated successfully:', data);
     return data;
   },
 
-  async create(settings: HomepageSettingsInsert): Promise<HomepageSettings> {
-    console.log('Creating homepage settings:', settings);
-    
-    try {
-      const { data, error } = await supabase
-        .from('homepage_settings')
-        .insert(settings)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Supabase error creating homepage settings:', error);
-        throw new Error(`Database error: ${error.message} (Code: ${error.code})`);
-      }
-      
-      if (!data) {
-        throw new Error('No data returned after creating homepage settings');
-      }
-      
-      console.log('Homepage settings created successfully:', data);
-      return data;
-    } catch (error) {
-      console.error('Error in create homepage settings:', error);
-      if (error instanceof Error) {
-        throw error;
-      } else {
-        throw new Error(`Unknown error creating homepage settings: ${JSON.stringify(error)}`);
-      }
+  async updateHomepageSettings(updates: HomepageSettingsUpdate): Promise<{ data: HomepageSettings | null; error: any }> {
+    const { data, error } = await supabase
+      .from('homepage_settings')
+      .update(updates)
+      .eq('id', 1)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating homepage settings:', error);
     }
+
+    return { data, error };
+  },
+
+  async initializeHomepageSettings(settings: HomepageSettingsInsert): Promise<{ data: HomepageSettings | null; error: any }> {
+    const { data, error } = await supabase
+      .from('homepage_settings')
+      .insert(settings)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error initializing homepage settings:', error);
+    }
+
+    return { data, error };
+  },
+
+  // Serviceable pincodes operations
+  async getServiceablePincodes(): Promise<ServiceablePincode[]> {
+    const { data, error } = await supabase
+      .from('serviceable_pincodes')
+      .select('*')
+      .order('pincode', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching serviceable pincodes:', error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  async checkPincodeServiceability(pincode: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('serviceable_pincodes')
+      .select('delivery_available')
+      .eq('pincode', pincode)
+      .single();
+
+    if (error) {
+      console.error('Error checking pincode serviceability:', error);
+      return false;
+    }
+
+    return data?.delivery_available || false;
+  },
+
+  async addServiceablePincode(pincode: ServiceablePincodeInsert): Promise<{ data: ServiceablePincode | null; error: any }> {
+    const { data, error } = await supabase
+      .from('serviceable_pincodes')
+      .insert(pincode)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding serviceable pincode:', error);
+    }
+
+    return { data, error };
+  },
+
+  async removeServiceablePincode(id: number): Promise<{ error: any }> {
+    const { error } = await supabase
+      .from('serviceable_pincodes')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error removing serviceable pincode:', error);
+    }
+
+    return { error };
   }
 }; 

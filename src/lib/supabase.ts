@@ -14,11 +14,14 @@ export interface Database {
         Row: {
           id: number;
           name: string;
-          description: string;
           price: number;
+          weight: string;
           image_url: string;
-          category: string;
-          available: boolean;
+          description: string;
+          stock: number;
+          is_bestseller: boolean;
+          is_new: boolean;
+          is_active: boolean;
           sort_order: number;
           created_at: string;
           updated_at: string;
@@ -26,11 +29,14 @@ export interface Database {
         Insert: {
           id?: number;
           name: string;
-          description: string;
           price: number;
-          image_url: string;
-          category: string;
-          available?: boolean;
+          weight: string;
+          image_url?: string;
+          description: string;
+          stock: number;
+          is_bestseller?: boolean;
+          is_new?: boolean;
+          is_active?: boolean;
           sort_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -38,11 +44,14 @@ export interface Database {
         Update: {
           id?: number;
           name?: string;
-          description?: string;
           price?: number;
+          weight?: string;
           image_url?: string;
-          category?: string;
-          available?: boolean;
+          description?: string;
+          stock?: number;
+          is_bestseller?: boolean;
+          is_new?: boolean;
+          is_active?: boolean;
           sort_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -50,73 +59,95 @@ export interface Database {
       };
       orders: {
         Row: {
-          id: number;
+          id: string;
+          order_number: string;
           customer_name: string;
           customer_phone: string;
+          customer_email?: string;
           customer_address: string;
           customer_pincode: string;
+          items: any;
           total: number;
-          status: string;
+          status: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+          payment_status: 'pending' | 'paid';
+          order_date: string;
+          delivery_date: string;
           created_at: string;
           updated_at: string;
         };
         Insert: {
-          id?: number;
+          id?: string;
+          order_number: string;
           customer_name: string;
           customer_phone: string;
+          customer_email?: string;
           customer_address: string;
           customer_pincode: string;
+          items: any;
           total: number;
-          status?: string;
+          status?: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+          payment_status?: 'pending' | 'paid';
+          order_date?: string;
+          delivery_date?: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
-          id?: number;
+          id?: string;
+          order_number?: string;
           customer_name?: string;
           customer_phone?: string;
+          customer_email?: string;
           customer_address?: string;
           customer_pincode?: string;
+          items?: any;
           total?: number;
-          status?: string;
+          status?: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+          payment_status?: 'pending' | 'paid';
+          order_date?: string;
+          delivery_date?: string;
           created_at?: string;
           updated_at?: string;
         };
       };
       customers: {
         Row: {
-          id: number;
+          id: string;
           name: string;
-          email: string;
           phone: string;
+          email?: string;
           address: string;
           pincode: string;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
-          id?: number;
+          id?: string;
           name: string;
-          email: string;
           phone: string;
+          email?: string;
           address: string;
           pincode: string;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
-          id?: number;
+          id?: string;
           name?: string;
-          email?: string;
           phone?: string;
+          email?: string;
           address?: string;
           pincode?: string;
           created_at?: string;
+          updated_at?: string;
         };
       };
       user_profiles: {
         Row: {
           id: string;
           email: string;
-          full_name: string;
+          name: string | null;
+          avatar_url: string | null;
           role: string;
           created_at: string;
           updated_at: string;
@@ -124,7 +155,8 @@ export interface Database {
         Insert: {
           id: string;
           email: string;
-          full_name: string;
+          name?: string | null;
+          avatar_url?: string | null;
           role?: string;
           created_at?: string;
           updated_at?: string;
@@ -132,7 +164,8 @@ export interface Database {
         Update: {
           id?: string;
           email?: string;
-          full_name?: string;
+          name?: string | null;
+          avatar_url?: string | null;
           role?: string;
           created_at?: string;
           updated_at?: string;
@@ -141,37 +174,46 @@ export interface Database {
       homepage_settings: {
         Row: {
           id: number;
-          hero_title: string;
-          hero_subtitle: string;
-          hero_image_url: string;
-          about_text: string;
-          contact_email: string;
-          contact_phone: string;
-          contact_address: string;
+          brand_name: string;
+          hero_image_url: string | null;
+          tagline: string;
+          order_deadline_text: string;
+          delivery_info_text: string;
+          menu_title: string;
+          serviceable_pincodes: string;
+          about_title: string | null;
+          about_content: string | null;
+          about_image_url: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: number;
-          hero_title: string;
-          hero_subtitle: string;
-          hero_image_url: string;
-          about_text: string;
-          contact_email: string;
-          contact_phone: string;
-          contact_address: string;
+          brand_name: string;
+          hero_image_url?: string | null;
+          tagline: string;
+          order_deadline_text: string;
+          delivery_info_text: string;
+          menu_title?: string;
+          serviceable_pincodes?: string;
+          about_title?: string | null;
+          about_content?: string | null;
+          about_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: number;
-          hero_title?: string;
-          hero_subtitle?: string;
-          hero_image_url?: string;
-          about_text?: string;
-          contact_email?: string;
-          contact_phone?: string;
-          contact_address?: string;
+          brand_name?: string;
+          hero_image_url?: string | null;
+          tagline?: string;
+          order_deadline_text?: string;
+          delivery_info_text?: string;
+          menu_title?: string;
+          serviceable_pincodes?: string;
+          about_title?: string | null;
+          about_content?: string | null;
+          about_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };

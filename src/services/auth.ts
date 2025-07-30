@@ -1,78 +1,172 @@
 import { supabase } from '../lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 
-export interface UserProfile {
+export interface AuthUser {
   id: string;
   email: string;
-  full_name: string;
-  role: string;
-  created_at: string;
-  updated_at: string;
+  name?: string;
+  avatar_url?: string;
 }
 
 export const authService = {
   // Get current user
   async getCurrentUser(): Promise<User | null> {
-    const { data: { user } } = await supabase.auth.getUser();
-    return user;
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('Error getting current user:', error);
+        return null;
+      }
+      return user;
+    } catch (error) {
+      console.error('Error in getCurrentUser:', error);
+      return null;
+    }
   },
 
   // Get current session
   async getCurrentSession(): Promise<Session | null> {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session;
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error getting current session:', error);
+        return null;
+      }
+      return session;
+    } catch (error) {
+      console.error('Error in getCurrentSession:', error);
+      return null;
+    }
   },
 
   // Sign in with Google
   async signInWithGoogle(): Promise<{ error: any }> {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/admin`
+    try {
+      // Get the current URL to use as redirect
+      const currentUrl = window.location.origin;
+      const redirectUrl = `${currentUrl}/admin`;
+
+      console.log('Initiating Google OAuth with redirect URL:', redirectUrl);
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Google OAuth error:', error);
+        return { error };
       }
-    });
-    return { error };
+
+      // If no error, the user should be redirected to Google
+      console.log('Google OAuth initiated successfully');
+      return { error: null };
+    } catch (error) {
+      console.error('Unexpected error in signInWithGoogle:', error);
+      return { error };
+    }
   },
 
   // Sign out
   async signOut(): Promise<{ error: any }> {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+      }
+      return { error };
+    } catch (error) {
+      console.error('Unexpected error in signOut:', error);
+      return { error };
+    }
   },
 
-  // Get user profile
-  async getUserProfile(userId: string): Promise<UserProfile | null> {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+  // Listen to auth state changes
+  onAuthStateChange(callback: (event: string, session: Session | null) => void) {
+    return supabase.auth.onAuthStateChange(callback);
+  },
 
-    if (error) {
-      console.error('Error fetching user profile:', error);
+  // Check if user is admin (you can customize this logic)
+  async isAdmin(user: User | null): Promise<boolean> {
+    if (!user) return false;
+    
+    // For now, we'll consider any authenticated user as admin
+    // You can add more specific logic here based on your requirements
+    // For example, check user metadata, role, or email domain
+    
+    // Example: Only allow specific email domains
+    // const allowedDomains = ['yourcompany.com', 'gmail.com'];
+    // const userDomain = user.email?.split('@')[1];
+    // return allowedDomains.includes(userDomain || '');
+    
+    // Example: Only allow specific email addresses
+    // const allowedEmails = ['admin@yourcompany.com', 'owner@gmail.com'];
+    // return allowedEmails.includes(user.email || '');
+    
+    return true;
+  },
+
+  // Get user profile data
+  async getUserProfile(userId: string): Promise<AuthUser | null> {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getUserProfile:', error);
       return null;
     }
-
-    return data;
   },
 
   // Create or update user profile
-  async upsertUserProfile(profile: Partial<UserProfile>): Promise<{ error: any }> {
-    const { error } = await supabase
-      .from('user_profiles')
-      .upsert(profile, { onConflict: 'id' });
+  async upsertUserProfile(user: User): Promise<{ data: any; error: any }> {
+    try {
+      const profile = {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+        avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+        updated_at: new Date().toISOString(),
+      };
 
-    return { error };
+      console.log('Upserting user profile:', profile);
+
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .upsert(profile, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error upserting user profile:', error);
+      } else {
+        console.log('User profile upserted successfully:', data);
+      }
+
+      return { data, error };
+    } catch (error) {
+      console.error('Unexpected error in upsertUserProfile:', error);
+      return { data: null, error };
+    }
   },
 
-  // Check if user is admin
-  async isAdmin(userId: string): Promise<boolean> {
-    const profile = await this.getUserProfile(userId);
-    return profile?.role === 'admin';
-  },
-
-  // Check if Supabase is configured
-  isConfigured(): boolean {
+  // Check if Supabase is properly configured
+  isSupabaseConfigured(): boolean {
     // Check for both VITE_ prefixed and standard environment variable names
     const url = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL;
     const key = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY;
