@@ -20,9 +20,9 @@
     .header { background: #f97316; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 8px 8px; }
     .order-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; }
-    .items-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-    .items-table th { background: #f97316; color: white; padding: 10px; text-align: left; }
-    .items-table td { padding: 8px; border-bottom: 1px solid #eee; }
+    .items-list { background: #fff; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    .item { padding: 8px 0; border-bottom: 1px solid #eee; }
+    .item:last-child { border-bottom: none; }
     .total { font-weight: bold; font-size: 18px; text-align: right; margin-top: 15px; padding-top: 15px; border-top: 2px solid #f97316; }
     .customer-info { background: #e0f2fe; padding: 15px; border-radius: 5px; margin: 15px 0; }
   </style>
@@ -48,19 +48,15 @@
       
       <div class="order-details">
         <h3>📋 Order Items</h3>
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th style="text-align: center;">Quantity</th>
-              <th style="text-align: right;">Price</th>
-              <th style="text-align: right;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{order_items}}
-          </tbody>
-        </table>
+        <div class="items-list">
+          <div style="background: #f97316; color: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-weight: bold;">
+            <span style="display: inline-block; width: 50%;">Item</span>
+            <span style="display: inline-block; width: 15%; text-align: center;">Qty</span>
+            <span style="display: inline-block; width: 15%; text-align: right;">Price</span>
+            <span style="display: inline-block; width: 20%; text-align: right;">Total</span>
+          </div>
+          {{order_items}}
+        </div>
         
         <div class="total">
           <h3>💰 Total Amount: {{total_amount}}</h3>
@@ -107,9 +103,9 @@
     .header { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 8px 8px; }
     .order-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; }
-    .items-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-    .items-table th { background: #10b981; color: white; padding: 10px; text-align: left; }
-    .items-table td { padding: 8px; border-bottom: 1px solid #eee; }
+    .items-list { background: #fff; padding: 15px; border-radius: 5px; margin: 15px 0; }
+    .item { padding: 8px 0; border-bottom: 1px solid #eee; }
+    .item:last-child { border-bottom: none; }
     .total { font-weight: bold; font-size: 18px; text-align: right; margin-top: 15px; padding-top: 15px; border-top: 2px solid #10b981; }
     .delivery-info { background: #d1fae5; padding: 15px; border-radius: 5px; margin: 15px 0; }
     .support-info { background: #fef3c7; padding: 15px; border-radius: 5px; margin: 15px 0; }
@@ -136,19 +132,15 @@
       
       <div class="order-details">
         <h3>📋 Your Order</h3>
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th style="text-align: center;">Quantity</th>
-              <th style="text-align: right;">Price</th>
-              <th style="text-align: right;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{order_items}}
-          </tbody>
-        </table>
+        <div class="items-list">
+          <div style="background: #10b981; color: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-weight: bold;">
+            <span style="display: inline-block; width: 50%;">Item</span>
+            <span style="display: inline-block; width: 15%; text-align: center;">Qty</span>
+            <span style="display: inline-block; width: 15%; text-align: right;">Price</span>
+            <span style="display: inline-block; width: 20%; text-align: right;">Total</span>
+          </div>
+          {{order_items}}
+        </div>
         
         <div class="total">
           <h3>💰 Total Amount: {{total_amount}}</h3>
@@ -188,7 +180,7 @@ These are the exact variables being passed from the code:
 | `{{customer_email}}` | Customer's email address | `john@example.com` |
 | `{{customer_address}}` | Customer's delivery address | `123 Main Street, City` |
 | `{{customer_pincode}}` | Customer's pincode | `110001` |
-| `{{order_items}}` | HTML table rows with order items | `<tr><td>Blueberry Muffin</td><td style="text-align: center;">1</td><td style="text-align: right;">₹60</td><td style="text-align: right;">₹60</td></tr>` |
+| `{{order_items}}` | Formatted order items with inline styling | `<div style="padding: 8px 0; border-bottom: 1px solid #eee;"><span style="display: inline-block; width: 50%;">Blueberry Muffin</span><span style="display: inline-block; width: 15%; text-align: center;">1</span><span style="display: inline-block; width: 15%; text-align: right;">₹60</span><span style="display: inline-block; width: 20%; text-align: right;">₹60</span></div>` |
 | `{{total_amount}}` | Total order amount with ₹ symbol | `₹280` |
 
 ## How to Create Templates in EmailJS
@@ -217,28 +209,27 @@ These are the exact variables being passed from the code:
 
 ## Important Notes
 
-- **Order items are now formatted as proper HTML table rows** for better display
-- **Each item will display in its own table row** with proper columns
+- **Order items are now formatted with inline styling** to avoid HTML escaping issues
+- **Each item uses div elements with inline-block spans** for proper alignment
 - **All other variables remain the same** and will be populated correctly
-- **The table structure ensures proper alignment** of quantities and prices
+- **The styling ensures proper alignment** without relying on table structures
 
 ## Testing
 
 After updating your templates:
-1. Go to `http://localhost:5173/email-debug`
-2. Click "Test Email Flow"
-3. Check that all variables are populated correctly
-4. Place a real order to test the complete flow
+1. Go to `http://localhost:5173/`
+2. Place a real order to test the complete flow
+3. Check your email inbox for properly formatted emails
 
 ## Expected Order Items Format
 
-Your order items will now display as a proper table:
+Your order items will now display as properly aligned content:
 ```
-┌─────────────────────┬──────────┬─────────┬─────────┐
-│ Item                │ Quantity │ Price   │ Total   │
-├─────────────────────┼──────────┼─────────┼─────────┤
-│ Blueberry Muffin    │    1     │   ₹60   │   ₹60   │
-│ Cinnamon Roll       │    1     │   ₹70   │   ₹70   │
-│ Multigrain Bread    │    1     │  ₹110   │  ₹110   │
-└─────────────────────┴──────────┴─────────┴─────────┘
+┌─────────────────────┬─────┬─────────┬─────────┐
+│ Item                │ Qty │ Price   │ Total   │
+├─────────────────────┼─────┼─────────┼─────────┤
+│ Blueberry Muffin    │  1  │   ₹60   │   ₹60   │
+│ Cinnamon Roll       │  1  │   ₹70   │   ₹70   │
+│ Multigrain Bread    │  1  │  ₹110   │  ₹110   │
+└─────────────────────┴─────┴─────────┴─────────┘
 ``` 
