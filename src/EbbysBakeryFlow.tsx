@@ -21,6 +21,7 @@ import TestSupabase from './test-supabase';
 import TestPincode from './test-pincode';
 import TestPincodeSimple from './test-pincode-simple';
 import TestEmailIntegration from './test-email-integration';
+import TestAdminEmail from './test-admin-email';
 import { productService, homepageSettingsService, orderService, customerService } from './services/database';
 import { simpleEmailService } from './services/email-simple';
 import { supabase } from './lib/supabase';
@@ -1333,6 +1334,7 @@ const PageRenderer = () => {
         case 'pincode': return <TestPincode />;
         case 'pincode-simple': return <TestPincodeSimple />;
         case 'email-test': return <TestEmailIntegration />;
+        case 'admin-email-test': return <TestAdminEmail />;
         default: return <Homepage />;
     }
 };

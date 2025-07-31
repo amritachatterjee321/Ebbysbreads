@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { simpleEmailService } from './services/email-simple';
 
 const TestEmailIntegration: React.FC = () => {
@@ -7,6 +7,7 @@ const TestEmailIntegration: React.FC = () => {
     customerEmail: { success: boolean; error?: string };
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   const testOrderData = {
     orderNumber: 'TEST123456',
@@ -23,11 +24,22 @@ const TestEmailIntegration: React.FC = () => {
     orderDate: new Date().toLocaleDateString('en-IN')
   };
 
+  // Add debug info on component mount
+  useEffect(() => {
+    setDebugInfo('Email test page loaded successfully');
+    console.log('Email test page loaded');
+  }, []);
+
   const handleTestEmails = async () => {
     setIsLoading(true);
+    setDebugInfo('Testing both emails...');
     try {
+      console.log('Testing admin email retrieval...');
       const adminEmail = await simpleEmailService.getAdminEmail();
+      console.log('Admin email result:', adminEmail);
+      
       if (!adminEmail) {
+        setDebugInfo('No admin email found in database');
         setTestResults({
           adminEmail: { success: false, error: 'No admin email found' },
           customerEmail: { success: false, error: 'Admin email required' }
@@ -35,9 +47,14 @@ const TestEmailIntegration: React.FC = () => {
         return;
       }
 
+      setDebugInfo(`Found admin email: ${adminEmail}. Testing email sending...`);
       const results = await simpleEmailService.sendOrderEmails(testOrderData, adminEmail);
+      console.log('Email results:', results);
       setTestResults(results);
+      setDebugInfo('Email test completed');
     } catch (error) {
+      console.error('Error in handleTestEmails:', error);
+      setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setTestResults({
         adminEmail: { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
         customerEmail: { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
@@ -49,9 +66,11 @@ const TestEmailIntegration: React.FC = () => {
 
   const handleTestAdminEmail = async () => {
     setIsLoading(true);
+    setDebugInfo('Testing admin email only...');
     try {
       const adminEmail = await simpleEmailService.getAdminEmail();
       if (!adminEmail) {
+        setDebugInfo('No admin email found');
         setTestResults({
           adminEmail: { success: false, error: 'No admin email found' },
           customerEmail: { success: false, error: 'N/A' }
@@ -64,7 +83,10 @@ const TestEmailIntegration: React.FC = () => {
         adminEmail: result,
         customerEmail: { success: false, error: 'N/A' }
       });
+      setDebugInfo('Admin email test completed');
     } catch (error) {
+      console.error('Error in handleTestAdminEmail:', error);
+      setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setTestResults({
         adminEmail: { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
         customerEmail: { success: false, error: 'N/A' }
@@ -76,13 +98,17 @@ const TestEmailIntegration: React.FC = () => {
 
   const handleTestCustomerEmail = async () => {
     setIsLoading(true);
+    setDebugInfo('Testing customer email only...');
     try {
       const result = await simpleEmailService.sendOrderConfirmation(testOrderData);
       setTestResults({
         adminEmail: { success: false, error: 'N/A' },
         customerEmail: result
       });
+      setDebugInfo('Customer email test completed');
     } catch (error) {
+      console.error('Error in handleTestCustomerEmail:', error);
+      setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setTestResults({
         adminEmail: { success: false, error: 'N/A' },
         customerEmail: { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
@@ -97,6 +123,12 @@ const TestEmailIntegration: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4">
         <div className="bg-white rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">Email Integration Test</h1>
+          
+          {/* Debug Info */}
+          <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <h3 className="font-semibold text-blue-800 mb-2">Debug Info:</h3>
+            <p className="text-sm text-blue-700">{debugInfo}</p>
+          </div>
           
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-700 mb-3">Test Order Data</h2>
@@ -171,6 +203,7 @@ const TestEmailIntegration: React.FC = () => {
               <li>• Make sure you have an admin user in the database with role='admin'</li>
               <li>• Configure EmailJS credentials in the email service for actual sending</li>
               <li>• This test uses sample data - real orders will use actual customer data</li>
+              <li>• If you see "EmailJS not configured" errors, that's expected until you set up EmailJS</li>
             </ul>
           </div>
         </div>

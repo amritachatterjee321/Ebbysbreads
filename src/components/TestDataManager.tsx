@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { isTest, isStaging, log } from '../lib/environment';
 import { supabase } from '../lib/supabase';
+import { useAppContext } from '../EbbysBakeryFlow';
 
 const TestDataManager: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const { setCurrentPage } = useAppContext();
 
   // Only show in test or staging environments
   if (!isTest() && !isStaging()) {
@@ -130,6 +132,20 @@ const TestDataManager: React.FC = () => {
           className="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? 'Clearing...' : 'Clear Test Data'}
+        </button>
+
+        <button
+          onClick={() => setCurrentPage('email-test')}
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+        >
+          📧 Test Email Integration
+        </button>
+
+        <button
+          onClick={() => setCurrentPage('admin-email-test')}
+          className="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+        >
+          🔍 Test Admin Email Setup
         </button>
       </div>
       
