@@ -174,8 +174,13 @@ export const simpleEmailService = {
         customer_address: emailData.orderData?.customerAddress || 'N/A',
         customer_pincode: emailData.orderData?.customerPincode || 'N/A',
         order_items: emailData.orderData ? emailData.orderData.items.map(item => 
-          `${item.name} - Qty: ${item.quantity} - Price: ₹${item.price} - Total: ₹${item.price * item.quantity}`
-        ).join('\n') : 'Order items will be populated from template',
+          `<tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">₹${item.price}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">₹${item.price * item.quantity}</td>
+          </tr>`
+        ).join('') : 'Order items will be populated from template',
         total_amount: emailData.orderData ? `₹${emailData.orderData.total}` : 'N/A'
       };
 

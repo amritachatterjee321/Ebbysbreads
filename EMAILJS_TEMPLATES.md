@@ -20,9 +20,9 @@
     .header { background: #f97316; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 8px 8px; }
     .order-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; }
-    .items-list { background: #fff; padding: 15px; border-radius: 5px; margin: 15px 0; }
-    .item { padding: 8px 0; border-bottom: 1px solid #eee; }
-    .item:last-child { border-bottom: none; }
+    .items-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .items-table th { background: #f97316; color: white; padding: 10px; text-align: left; }
+    .items-table td { padding: 8px; border-bottom: 1px solid #eee; }
     .total { font-weight: bold; font-size: 18px; text-align: right; margin-top: 15px; padding-top: 15px; border-top: 2px solid #f97316; }
     .customer-info { background: #e0f2fe; padding: 15px; border-radius: 5px; margin: 15px 0; }
   </style>
@@ -48,9 +48,19 @@
       
       <div class="order-details">
         <h3>📋 Order Items</h3>
-        <div class="items-list">
-          <pre style="font-family: Arial, sans-serif; white-space: pre-wrap; margin: 0;">{{order_items}}</pre>
-        </div>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th style="text-align: center;">Quantity</th>
+              <th style="text-align: right;">Price</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{order_items}}
+          </tbody>
+        </table>
         
         <div class="total">
           <h3>💰 Total Amount: {{total_amount}}</h3>
@@ -97,9 +107,9 @@
     .header { background: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 8px 8px; }
     .order-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; }
-    .items-list { background: #fff; padding: 15px; border-radius: 5px; margin: 15px 0; }
-    .item { padding: 8px 0; border-bottom: 1px solid #eee; }
-    .item:last-child { border-bottom: none; }
+    .items-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .items-table th { background: #10b981; color: white; padding: 10px; text-align: left; }
+    .items-table td { padding: 8px; border-bottom: 1px solid #eee; }
     .total { font-weight: bold; font-size: 18px; text-align: right; margin-top: 15px; padding-top: 15px; border-top: 2px solid #10b981; }
     .delivery-info { background: #d1fae5; padding: 15px; border-radius: 5px; margin: 15px 0; }
     .support-info { background: #fef3c7; padding: 15px; border-radius: 5px; margin: 15px 0; }
@@ -126,9 +136,19 @@
       
       <div class="order-details">
         <h3>📋 Your Order</h3>
-        <div class="items-list">
-          <pre style="font-family: Arial, sans-serif; white-space: pre-wrap; margin: 0;">{{order_items}}</pre>
-        </div>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th style="text-align: center;">Quantity</th>
+              <th style="text-align: right;">Price</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{order_items}}
+          </tbody>
+        </table>
         
         <div class="total">
           <h3>💰 Total Amount: {{total_amount}}</h3>
@@ -168,8 +188,8 @@ These are the exact variables being passed from the code:
 | `{{customer_email}}` | Customer's email address | `john@example.com` |
 | `{{customer_address}}` | Customer's delivery address | `123 Main Street, City` |
 | `{{customer_pincode}}` | Customer's pincode | `110001` |
-| `{{order_items}}` | Formatted order items (one per line) | `Chocolate Cake - Qty: 2 - Price: ₹500 - Total: ₹1000`<br>`Bread Loaf - Qty: 1 - Price: ₹100 - Total: ₹100` |
-| `{{total_amount}}` | Total order amount with ₹ symbol | `₹1100` |
+| `{{order_items}}` | HTML table rows with order items | `<tr><td>Blueberry Muffin</td><td style="text-align: center;">1</td><td style="text-align: right;">₹60</td><td style="text-align: right;">₹60</td></tr>` |
+| `{{total_amount}}` | Total order amount with ₹ symbol | `₹280` |
 
 ## How to Create Templates in EmailJS
 
@@ -197,11 +217,10 @@ These are the exact variables being passed from the code:
 
 ## Important Notes
 
-- **Order items are now formatted as plain text** to avoid HTML escaping issues
-- **Each item shows**: Name - Qty: X - Price: ₹X - Total: ₹X
-- **Items are separated by line breaks** for easy reading
+- **Order items are now formatted as proper HTML table rows** for better display
+- **Each item will display in its own table row** with proper columns
 - **All other variables remain the same** and will be populated correctly
-- **The `<pre>` tag preserves formatting** and line breaks
+- **The table structure ensures proper alignment** of quantities and prices
 
 ## Testing
 
@@ -213,9 +232,13 @@ After updating your templates:
 
 ## Expected Order Items Format
 
-Your order items will now display like this:
+Your order items will now display as a proper table:
 ```
-Chocolate Cake - Qty: 2 - Price: ₹500 - Total: ₹1000
-Bread Loaf - Qty: 1 - Price: ₹100 - Total: ₹100
-Pain au Chocolat - Qty: 1 - Price: ₹85 - Total: ₹85
+┌─────────────────────┬──────────┬─────────┬─────────┐
+│ Item                │ Quantity │ Price   │ Total   │
+├─────────────────────┼──────────┼─────────┼─────────┤
+│ Blueberry Muffin    │    1     │   ₹60   │   ₹60   │
+│ Cinnamon Roll       │    1     │   ₹70   │   ₹70   │
+│ Multigrain Bread    │    1     │  ₹110   │  ₹110   │
+└─────────────────────┴──────────┴─────────┴─────────┘
 ``` 
