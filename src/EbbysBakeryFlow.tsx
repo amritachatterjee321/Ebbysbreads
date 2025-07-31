@@ -20,6 +20,7 @@ import AdminDashboard from './AdminDashboard';
 import TestSupabase from './test-supabase';
 import TestPincode from './test-pincode';
 import TestPincodeSimple from './test-pincode-simple';
+import TestEmailIntegration from './test-email-integration';
 import { productService, homepageSettingsService, orderService, customerService } from './services/database';
 import { simpleEmailService } from './services/email-simple';
 import { supabase } from './lib/supabase';
@@ -374,7 +375,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       const createdOrder = await orderService.create(orderData);
       console.log('Order created successfully:', createdOrder);
 
-      // Send email notification to admin
+      // Send email notifications to both admin and customer
       try {
         const adminEmail = await simpleEmailService.getAdminEmail();
         if (adminEmail) {
@@ -382,7 +383,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
             orderNumber: orderNumber,
             customerName: customerData.name,
             customerPhone: customerData.phone,
-            customerEmail: customerData.email || 'Not provided',
+            customerEmail: customerData.email || undefined,
             customerAddress: customerData.address,
             customerPincode: customerData.pincode,
             items: cart.map(item => ({
@@ -394,17 +395,24 @@ export const AppProvider = ({ children }: AppProviderProps) => {
             orderDate: new Date().toLocaleDateString('en-IN')
           };
 
-          const emailResult = await simpleEmailService.sendNewOrderNotification(emailData, adminEmail);
-          if (emailResult.success) {
-            console.log('Email notification sent successfully');
+          const emailResults = await simpleEmailService.sendOrderEmails(emailData, adminEmail);
+          
+          if (emailResults.adminEmail.success) {
+            console.log('Admin email notification sent successfully');
           } else {
-            console.warn('Failed to send email notification:', emailResult.error);
+            console.warn('Failed to send admin email notification:', emailResults.adminEmail.error);
+          }
+          
+          if (emailResults.customerEmail.success) {
+            console.log('Customer confirmation email sent successfully');
+          } else {
+            console.warn('Failed to send customer confirmation email:', emailResults.customerEmail.error);
           }
         } else {
           console.warn('No admin email found for notifications');
         }
       } catch (emailError) {
-        console.error('Error sending email notification:', emailError);
+        console.error('Error sending email notifications:', emailError);
         // Don't fail the order creation if email fails
       }
 
@@ -1324,6 +1332,7 @@ const PageRenderer = () => {
         case 'storage': return <TestSupabase />;
         case 'pincode': return <TestPincode />;
         case 'pincode-simple': return <TestPincodeSimple />;
+        case 'email-test': return <TestEmailIntegration />;
         default: return <Homepage />;
     }
 };

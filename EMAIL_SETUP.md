@@ -1,227 +1,214 @@
-# Email Notification Setup Guide
+# Email Service Setup Guide
 
-This guide will help you set up email notifications for new orders received in your bakery application.
+This guide will help you set up email notifications for your bakery application using EmailJS.
 
-## 🚀 Overview
+## Overview
 
-The email notification system will automatically send emails to admin users whenever a new order is placed. The system includes:
+The application now sends two types of emails when an order is placed:
+1. **Admin Notification** - Sent to the admin when a new order is received
+2. **Customer Confirmation** - Sent to the customer confirming their order
 
-- **Beautiful HTML email templates** with order details
-- **Automatic admin email detection** from user profiles
-- **Error handling** that doesn't break order creation
-- **Professional email formatting** with your bakery branding
+## Setup Steps
 
-## 📧 Email Service Options
+### 1. Create EmailJS Account
 
-### Option 1: Resend (Recommended)
+1. Go to [EmailJS](https://www.emailjs.com/) and create a free account
+2. Verify your email address
 
-[Resend](https://resend.com) is a modern email API that's easy to set up and has excellent deliverability.
+### 2. Create Email Service
 
-#### Setup Steps:
+1. In EmailJS dashboard, go to "Email Services"
+2. Click "Add New Service"
+3. Choose your email provider (Gmail, Outlook, etc.)
+4. Follow the authentication steps
+5. Note down your **Service ID**
 
-1. **Sign up for Resend**
-   - Go to [resend.com](https://resend.com)
-   - Create a free account (100 emails/day free)
-   - Verify your domain or use their sandbox domain
+### 3. Create Email Templates
 
-2. **Get your API key**
-   - Go to your Resend dashboard
-   - Navigate to API Keys
-   - Create a new API key
-   - Copy the key (starts with `re_`)
+#### Admin Notification Template
 
-3. **Configure Supabase Edge Function**
-   - Go to your Supabase dashboard
-   - Navigate to Settings → Edge Functions
-   - Add environment variable: `RESEND_API_KEY = your_api_key_here`
+1. Go to "Email Templates" in EmailJS dashboard
+2. Click "Create New Template"
+3. Name it "Admin Order Notification"
+4. Use this template:
 
-4. **Deploy the Edge Function**
-   ```bash
-   # Install Supabase CLI if you haven't already
-   npm install -g supabase
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Order - {{order_number}}</title>
+</head>
+<body>
+    <h1>🍞 New Order Received!</h1>
+    <p>Order #{{order_number}}</p>
+    
+    <h2>Order Details</h2>
+    <p><strong>Order Number:</strong> {{order_number}}</p>
+    <p><strong>Order Date:</strong> {{order_date}}</p>
+    <p><strong>Status:</strong> Pending</p>
 
-   # Login to Supabase
-   supabase login
+    <h3>Customer Information</h3>
+    <p><strong>Name:</strong> {{customer_name}}</p>
+    <p><strong>Phone:</strong> {{customer_phone}}</p>
+    <p><strong>Email:</strong> {{customer_email}}</p>
+    <p><strong>Address:</strong> {{customer_address}}</p>
+    <p><strong>Pincode:</strong> {{customer_pincode}}</p>
 
-   # Deploy the function
-   supabase functions deploy send-email
-   ```
+    <h3>Order Items</h3>
+    {{order_items}}
 
-### Option 2: SendGrid
+    <p><strong>Total Amount: ₹{{total_amount}}</strong></p>
 
-[SendGrid](https://sendgrid.com) is another popular email service.
+    <p><strong>Action Required:</strong> Please review this order and update its status in the admin dashboard.</p>
+</body>
+</html>
+```
 
-#### Setup Steps:
+#### Customer Confirmation Template
 
-1. **Sign up for SendGrid**
-   - Go to [sendgrid.com](https://sendgrid.com)
-   - Create a free account (100 emails/day free)
-   - Verify your domain
+1. Create another template named "Customer Order Confirmation"
+2. Use this template:
 
-2. **Get your API key**
-   - Go to Settings → API Keys
-   - Create a new API key with "Mail Send" permissions
-   - Copy the key
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Confirmed - {{order_number}}</title>
+</head>
+<body>
+    <h1>🍞 Order Confirmed!</h1>
+    <p>Thank you for your order, {{customer_name}}!</p>
+    
+    <h2>Order Details</h2>
+    <p><strong>Order Number:</strong> {{order_number}}</p>
+    <p><strong>Order Date:</strong> {{order_date}}</p>
+    <p><strong>Status:</strong> Confirmed</p>
+    <p><strong>Payment Method:</strong> Cash on Delivery</p>
 
-3. **Update the Edge Function**
-   - Replace the Resend code in `supabase/functions/send-email/index.ts` with SendGrid code
-   - Set environment variable: `SENDGRID_API_KEY = your_api_key_here`
+    <h3>Delivery Information</h3>
+    <p><strong>Delivery Address:</strong></p>
+    <p>{{customer_address}}</p>
+    <p><strong>Pincode:</strong> {{customer_pincode}}</p>
+    <p><strong>Expected Delivery:</strong> Wednesday - Friday</p>
 
-### Option 3: Gmail SMTP (Simple Setup)
+    <h3>Order Items</h3>
+    {{order_items}}
 
-For testing or small volume, you can use Gmail SMTP.
+    <p><strong>Total Amount: ₹{{total_amount}}</strong></p>
 
-#### Setup Steps:
+    <h3>Need Help?</h3>
+    <p><strong>Phone Support:</strong> +91 98765 43210</p>
+    <p><strong>Support Hours:</strong> Monday - Saturday: 9:00 AM - 7:00 PM</p>
+    <p><strong>Follow Us:</strong> @ebbysbreads</p>
 
-1. **Enable 2-factor authentication** on your Gmail account
-2. **Generate an App Password**
-   - Go to Google Account settings
-   - Security → 2-Step Verification → App passwords
-   - Generate a password for "Mail"
-3. **Update the Edge Function** to use SMTP instead of API
+    <p>Thank you for choosing Ebby's Bakery! 🍰</p>
+</body>
+</html>
+```
 
-## 🔧 Configuration
+### 4. Get Your Credentials
 
-### 1. Update Email From Address
+1. Go to "Account" → "API Keys" in EmailJS dashboard
+2. Copy your **Public Key**
 
-In `supabase/functions/send-email/index.ts`, update the `from` address:
+### 5. Update the Code
+
+Open `src/services/email-simple.ts` and update the `sendEmailViaService` function:
 
 ```typescript
-const emailData = {
-  from: 'orders@yourbakery.com', // Update this with your verified domain
-  to: [to],
-  subject: subject,
-  html: html,
-  text: text || '',
-};
+// Replace the TODO section with:
+const emailjs = await import('@emailjs/browser');
+
+const result = await emailjs.send(
+  'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
+  'YOUR_ADMIN_TEMPLATE_ID', // Replace with admin template ID
+  {
+    order_number: emailData.orderNumber,
+    order_date: new Date().toLocaleDateString('en-IN'),
+    customer_name: orderData.customerName,
+    customer_phone: orderData.customerPhone,
+    customer_email: orderData.customerEmail || 'Not provided',
+    customer_address: orderData.customerAddress,
+    customer_pincode: orderData.customerPincode,
+    order_items: this.formatOrderItemsForEmail(orderData.items),
+    total_amount: orderData.total,
+  },
+  'YOUR_PUBLIC_KEY' // Replace with your EmailJS public key
+);
+
+if (result.status === 200) {
+  return { success: true };
+} else {
+  return { success: false, error: 'Failed to send email' };
+}
 ```
 
-### 2. Set Admin Email
+### 6. Install EmailJS Package
 
-The system automatically detects admin emails from the `user_profiles` table. Make sure your admin user has:
+Run this command in your project directory:
 
-- `role = 'admin'` in the `user_profiles` table
-- A valid email address
-
-You can update this manually in Supabase:
-
-```sql
-UPDATE user_profiles 
-SET role = 'admin' 
-WHERE email = 'your-admin-email@example.com';
+```bash
+npm install @emailjs/browser
 ```
 
-### 3. Test Email Notifications
+### 7. Set Up Admin Email
 
-1. **Place a test order** through your application
-2. **Check the browser console** for email sending logs
-3. **Check your admin email** for the notification
-4. **Check Supabase logs** for any errors
+Make sure you have an admin user in your `user_profiles` table with `role = 'admin'` and a valid email address.
 
-## 📧 Email Template Customization
+## Testing
 
-The email template is generated in `src/services/email.ts`. You can customize:
+1. Place a test order with a customer email
+2. Check the browser console for email logs
+3. Verify that both admin and customer emails are being sent
 
-### Colors and Branding
-```typescript
-// Update these colors in the HTML template
-.header { background: #f97316; } // Orange header
-.items-table th { background: #f97316; } // Table headers
-```
-
-### Content
-```typescript
-// Update the email content
-const html = `
-  <h1>🍞 New Order Received!</h1>
-  <p>Order #${orderData.orderNumber}</p>
-  // ... rest of template
-`;
-```
-
-### Styling
-The email uses inline CSS for maximum compatibility. You can modify the styles in the `generateNewOrderEmail` function.
-
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Email Not Sending
+- Check EmailJS dashboard for any errors
+- Verify your service ID, template ID, and public key
+- Ensure your email service is properly connected
 
-1. **Check API Key**
-   - Verify your email service API key is set correctly
-   - Check Supabase environment variables
+### Admin Email Not Found
+- Check that you have a user in `user_profiles` table with `role = 'admin'`
+- Verify the admin user has a valid email address
 
-2. **Check Domain Verification**
-   - Ensure your domain is verified with your email service
-   - Use a verified domain in the `from` address
+### Customer Email Not Sending
+- Ensure the customer provided an email address
+- Check that the email format is valid
 
-3. **Check Edge Function Logs**
-   - Go to Supabase Dashboard → Edge Functions → Logs
-   - Look for errors in the `send-email` function
+## Email Templates Variables
 
-4. **Check Browser Console**
-   - Open browser developer tools
-   - Look for email-related errors in the console
+### Admin Template Variables
+- `{{order_number}}` - Order number
+- `{{order_date}}` - Order date
+- `{{customer_name}}` - Customer name
+- `{{customer_phone}}` - Customer phone
+- `{{customer_email}}` - Customer email
+- `{{customer_address}}` - Customer address
+- `{{customer_pincode}}` - Customer pincode
+- `{{order_items}}` - Formatted order items
+- `{{total_amount}}` - Total order amount
 
-### Common Errors
+### Customer Template Variables
+- `{{order_number}}` - Order number
+- `{{order_date}}` - Order date
+- `{{customer_name}}` - Customer name
+- `{{customer_address}}` - Customer address
+- `{{customer_pincode}}` - Customer pincode
+- `{{order_items}}` - Formatted order items
+- `{{total_amount}}` - Total order amount
 
-**"Email service not configured"**
-- Set the API key environment variable in Supabase
+## Security Notes
 
-**"Failed to send email"**
-- Check your email service account status
-- Verify API key permissions
-- Check domain verification
+- Never commit your EmailJS credentials to version control
+- Use environment variables for sensitive data in production
+- Consider rate limiting for email sending
+- Monitor your EmailJS usage to stay within free tier limits
 
-**"No admin email found"**
-- Ensure admin user has `role = 'admin'` in `user_profiles`
-- Verify email address is valid
+## Production Considerations
 
-## 🔒 Security Considerations
-
-1. **API Key Security**
-   - Never commit API keys to version control
-   - Use environment variables in Supabase
-   - Rotate API keys regularly
-
-2. **Email Validation**
-   - The system validates email addresses before sending
-   - Admin emails are fetched from the database
-
-3. **Rate Limiting**
-   - Email services have rate limits
-   - Monitor your usage to avoid hitting limits
-
-## 📊 Monitoring
-
-### Email Delivery Tracking
-
-Most email services provide delivery tracking:
-
-- **Resend**: Dashboard shows delivery status
-- **SendGrid**: Activity feed shows email status
-- **Gmail**: Check sent folder for delivery
-
-### Logs and Analytics
-
-- **Supabase Logs**: Edge function execution logs
-- **Email Service Dashboard**: Delivery rates and bounces
-- **Application Logs**: Console logs for debugging
-
-## 🎯 Next Steps
-
-1. **Set up your preferred email service**
-2. **Deploy the Edge Function**
-3. **Test with a sample order**
-4. **Customize the email template**
-5. **Monitor delivery rates**
-
-## 📞 Support
-
-If you encounter issues:
-
-1. Check the troubleshooting section above
-2. Review Supabase Edge Function logs
-3. Verify email service configuration
-4. Test with a simple email first
-
-The email notification system is designed to be robust and won't break order creation if email sending fails. All errors are logged for debugging purposes. 
+1. **Environment Variables**: Store EmailJS credentials in environment variables
+2. **Rate Limiting**: Implement rate limiting for email sending
+3. **Error Handling**: Add proper error handling and retry logic
+4. **Monitoring**: Set up monitoring for email delivery success rates
+5. **Backup Service**: Consider having a backup email service provider 
