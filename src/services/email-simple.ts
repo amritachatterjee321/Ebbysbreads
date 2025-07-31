@@ -24,6 +24,9 @@ export interface OrderEmailData {
   orderDate: string;
 }
 
+// Track email sending to prevent duplicates
+let emailSendingInProgress = false;
+
 export const simpleEmailService = {
   // Send email notification for new order to admin
   async sendNewOrderNotification(orderData: OrderEmailData, adminEmail: string): Promise<{ success: boolean; error?: string }> {
@@ -103,15 +106,30 @@ export const simpleEmailService = {
     adminEmail: { success: boolean; error?: string }; 
     customerEmail: { success: boolean; error?: string } 
   }> {
-    const [adminResult, customerResult] = await Promise.allSettled([
-      this.sendNewOrderNotification(orderData, adminEmail),
-      this.sendOrderConfirmation(orderData)
-    ]);
+    // Prevent duplicate email sending
+    if (emailSendingInProgress) {
+      console.log('🛑 Email sending already in progress, ignoring duplicate request');
+      return {
+        adminEmail: { success: false, error: 'Duplicate email request ignored' },
+        customerEmail: { success: false, error: 'Duplicate email request ignored' }
+      };
+    }
 
-    return {
-      adminEmail: adminResult.status === 'fulfilled' ? adminResult.value : { success: false, error: 'Promise rejected' },
-      customerEmail: customerResult.status === 'fulfilled' ? customerResult.value : { success: false, error: 'Promise rejected' }
-    };
+    emailSendingInProgress = true;
+    
+    try {
+      const [adminResult, customerResult] = await Promise.allSettled([
+        this.sendNewOrderNotification(orderData, adminEmail),
+        this.sendOrderConfirmation(orderData)
+      ]);
+
+      return {
+        adminEmail: adminResult.status === 'fulfilled' ? adminResult.value : { success: false, error: 'Promise rejected' },
+        customerEmail: customerResult.status === 'fulfilled' ? customerResult.value : { success: false, error: 'Promise rejected' }
+      };
+    } finally {
+      emailSendingInProgress = false;
+    }
   },
 
   // Send email via EmailJS service
@@ -165,7 +183,8 @@ export const simpleEmailService = {
         serviceId: EMAILJS_CONFIG.SERVICE_ID,
         templateId: templateId,
         to: emailData.to,
-        subject: emailData.subject
+        subject: emailData.subject,
+        orderNumber: emailData.orderData?.orderNumber || 'N/A'
       });
 
       const result = await emailjs.send(

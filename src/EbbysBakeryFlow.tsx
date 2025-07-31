@@ -23,6 +23,7 @@ import TestPincodeSimple from './test-pincode-simple';
 import TestEmailIntegration from './test-email-integration';
 import TestAdminEmail from './test-admin-email';
 import TestEmailDebug from './test-email-debug';
+import TestEmailDuplicateDebug from './test-email-duplicate-debug';
 import { productService, homepageSettingsService, orderService, customerService } from './services/database';
 import { simpleEmailService } from './services/email-simple';
 import { supabase } from './lib/supabase';
@@ -325,6 +326,12 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   };
 
   const placeOrder = async (customerData: CustomerInfo, validationRules: (data: CustomerInfo) => ValidationErrors) => {
+    // Prevent duplicate submissions
+    if (isLoading) {
+      console.log('🛑 Order placement already in progress, ignoring duplicate request');
+      return false;
+    }
+    
     console.log('🔍 placeOrder called with customerData:', customerData);
     console.log('🔍 Cart items:', cart);
     console.log('🔍 Total amount:', total);
@@ -634,6 +641,14 @@ const Homepage = () => {
                   onClick={() => setCurrentPage('email-debug')}
                 >
                   🐛 Debug
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50 px-2 sm:px-3"
+                  onClick={() => setCurrentPage('email-duplicate-debug')}
+                >
+                  🔄 Duplicate Test
                 </Button>
               </div>
             </div>
@@ -1353,6 +1368,7 @@ const PageRenderer = () => {
         case 'email-test': return <TestEmailIntegration />;
         case 'admin-email-test': return <TestAdminEmail />;
         case 'email-debug': return <TestEmailDebug />;
+        case 'email-duplicate-debug': return <TestEmailDuplicateDebug />;
         default: return <Homepage />;
     }
 };
