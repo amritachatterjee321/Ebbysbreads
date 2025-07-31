@@ -1,161 +1,96 @@
-# Quick Email Setup for Testing
+# 🚀 Quick Email Setup Guide
 
-This guide will help you quickly set up email notifications for testing purposes.
+## The Problem
+Your EmailJS configuration still has placeholder values, which is why emails aren't being sent.
 
-## 🚀 Quick Start (5 minutes)
+## Immediate Fix
 
-### Option 1: Use EmailJS (Easiest)
-
-1. **Sign up for EmailJS**
-   - Go to [emailjs.com](https://emailjs.com)
-   - Create a free account
-   - Add your Gmail account as an email service
-
-2. **Get your credentials**
-   - Copy your Public Key
-   - Copy your Service ID
-   - Copy your Template ID
-
-3. **Update the email service**
-   - Replace the placeholder in `src/services/email-simple.ts`
-   - Update the `sendEmailViaService` function with EmailJS code
-
-### Option 2: Use a Test Email Service
-
-For immediate testing, you can use services like:
-- **Mailtrap** (for testing)
-- **Ethereal Email** (fake SMTP for testing)
-- **MailHog** (local email testing)
-
-## 🔧 Quick Configuration
-
-### 1. Set Admin Role
-
-Run this SQL in your Supabase dashboard:
-
-```sql
--- Set your email as admin
-UPDATE user_profiles 
-SET role = 'admin' 
-WHERE email = 'your-email@example.com';
-
--- Or insert a new admin user
-INSERT INTO user_profiles (id, email, name, role) 
-VALUES (
-  gen_random_uuid(), 
-  'your-email@example.com', 
-  'Admin User', 
-  'admin'
-);
-```
-
-### 2. Test the System
-
-1. **Place a test order** in your application
-2. **Check browser console** for email logs
-3. **Check your email** for the notification
-
-## 📧 EmailJS Integration Example
-
-Replace the `sendEmailViaService` function in `src/services/email-simple.ts`:
+### Step 1: Update EmailJS Configuration
+Edit `src/config/emailjs.ts` and replace the placeholder values:
 
 ```typescript
-async sendEmailViaService(emailData: {
-  to: string;
-  subject: string;
-  html: string;
-  text: string;
-}): Promise<{ success: boolean; error?: string }> {
-  try {
-    // Load EmailJS
-    const emailjs = await import('@emailjs/browser');
-    
-    const result = await emailjs.send(
-      'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
-      'YOUR_TEMPLATE_ID', // Replace with your EmailJS template ID
-      {
-        to_email: emailData.to,
-        subject: emailData.subject,
-        message: emailData.html,
-        from_name: 'Ebby\'s Bakery',
-      },
-      'YOUR_PUBLIC_KEY' // Replace with your EmailJS public key
-    );
-
-    if (result.status === 200) {
-      return { success: true };
-    } else {
-      return { success: false, error: 'Failed to send email' };
-    }
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+export const EMAILJS_CONFIG = {
+  // Replace with your actual EmailJS Service ID
+  SERVICE_ID: 'your_service_id_here',
+  
+  // Replace with your actual EmailJS Public Key
+  PUBLIC_KEY: 'your_public_key_here',
+  
+  // Replace with your actual Template IDs
+  TEMPLATES: {
+    ADMIN_NOTIFICATION: 'your_admin_template_id_here',
+    CUSTOMER_CONFIRMATION: 'your_customer_template_id_here'
   }
-}
+};
 ```
 
-### Install EmailJS
+### Step 2: Get Your EmailJS Credentials
+
+1. **Go to**: https://www.emailjs.com/
+2. **Sign up/Login** to your account
+3. **Get Service ID**:
+   - Go to "Email Services" tab
+   - Create a new service (Gmail, Outlook, etc.)
+   - Copy the Service ID
+4. **Get Public Key**:
+   - Go to "Account" → "API Keys"
+   - Copy your Public Key
+5. **Get Template IDs**:
+   - Go to "Email Templates" tab
+   - Create the two templates (see below)
+   - Copy the Template IDs
+
+### Step 3: Create Email Templates
+
+#### Admin Notification Template
+- **Name**: "Admin Order Notification"
+- **Subject**: "New Order Received - {{order_number}}"
+- **Content**: Use the HTML from `EMAILJS_SETUP.md`
+
+#### Customer Confirmation Template
+- **Name**: "Customer Order Confirmation"
+- **Subject**: "Order Confirmed - {{order_number}} | Ebby's Bakery"
+- **Content**: Use the HTML from `EMAILJS_SETUP.md`
+
+### Step 4: Test the Setup
+
+1. **Go to**: `http://localhost:3000/email-debug`
+2. **Click**: "Test Email Flow"
+3. **Check**: All items should show ✅
+
+### Step 5: Test Real Order
+
+1. **Go to**: `http://localhost:3000`
+2. **Add items** to cart
+3. **Place order** with your email
+4. **Check inbox** for both emails
+
+## Quick Commands
 
 ```bash
-npm install @emailjs/browser
+# Start the app
+npm run dev
+
+# Create admin user (if needed)
+node create-admin-simple.js your-email@example.com
 ```
 
-## 🧪 Testing Without Email Service
+## Troubleshooting
 
-If you want to test the order creation without setting up email:
+### If "EmailJS not configured":
+- Update `src/config/emailjs.ts` with real values
+- Make sure templates are published in EmailJS dashboard
 
-1. **Comment out the email sending code** in `src/EbbysBakeryFlow.tsx`:
-
-```typescript
-// Comment out this section for testing
-/*
-try {
-  const adminEmail = await emailService.getAdminEmail();
-  if (adminEmail) {
-    // ... email sending code
-  }
-} catch (emailError) {
-  console.error('Error sending email notification:', emailError);
-}
-*/
+### If "No admin email found":
+```bash
+node create-admin-simple.js your-email@example.com
 ```
 
-2. **Test order creation** - orders will still be saved to the database
-3. **Check the admin dashboard** to see new orders
-
-## 📊 Monitor Order Creation
-
-### Check Database
-
-Go to your Supabase dashboard → Table Editor → `orders` table to see new orders.
-
-### Check Console Logs
-
-Open browser developer tools and look for:
-- "Creating order in database"
-- "Order created successfully"
-- "Email notification sent successfully" (if email is configured)
-
-## 🎯 Next Steps
-
-1. **Test order creation** without email first
-2. **Set up a simple email service** (EmailJS recommended)
-3. **Test email notifications**
-4. **Customize email template** if needed
-
-## 🚨 Troubleshooting
-
-### Order Not Creating
+### If emails not sending:
 - Check browser console for errors
-- Verify database connection
-- Check Supabase logs
+- Verify EmailJS service is active
+- Check email provider permissions
 
-### Email Not Sending
-- Verify email service configuration
-- Check API keys and credentials
-- Test with a simple email first
+## Need Help?
 
-### No Admin Email Found
-- Run the SQL to set admin role
-- Verify email address in user_profiles table
-
-The system is designed to work even if email fails - orders will still be created and saved to the database. 
+Use the **🐛 Debug** button on the homepage to run comprehensive tests and see exactly what's failing! 

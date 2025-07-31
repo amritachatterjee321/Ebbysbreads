@@ -22,6 +22,7 @@ import TestPincode from './test-pincode';
 import TestPincodeSimple from './test-pincode-simple';
 import TestEmailIntegration from './test-email-integration';
 import TestAdminEmail from './test-admin-email';
+import TestEmailDebug from './test-email-debug';
 import { productService, homepageSettingsService, orderService, customerService } from './services/database';
 import { simpleEmailService } from './services/email-simple';
 import { supabase } from './lib/supabase';
@@ -625,6 +626,14 @@ const Homepage = () => {
                   onClick={() => setCurrentPage('email-test')}
                 >
                   📧 Test
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-red-300 text-red-700 hover:bg-red-50 px-2 sm:px-3"
+                  onClick={() => setCurrentPage('email-debug')}
+                >
+                  🐛 Debug
                 </Button>
               </div>
             </div>
@@ -1343,6 +1352,7 @@ const PageRenderer = () => {
         case 'pincode-simple': return <TestPincodeSimple />;
         case 'email-test': return <TestEmailIntegration />;
         case 'admin-email-test': return <TestAdminEmail />;
+        case 'email-debug': return <TestEmailDebug />;
         default: return <Homepage />;
     }
 };

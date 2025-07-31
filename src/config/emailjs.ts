@@ -3,15 +3,22 @@
 
 export const EMAILJS_CONFIG = {
   // Your EmailJS Service ID (from Email Services tab)
-  SERVICE_ID: 'YOUR_SERVICE_ID',
+  // Example: 'service_abc123'
+  SERVICE_ID: 'service_des65sk',
   
   // Your EmailJS Public Key (from Account > API Keys)
-  PUBLIC_KEY: 'YOUR_PUBLIC_KEY',
+  // Example: 'user_xyz789'
+  PUBLIC_KEY: 'CHOpZWvCB0w7AqTnN',
   
   // Template IDs (from Email Templates tab)
   TEMPLATES: {
-    ADMIN_NOTIFICATION: 'YOUR_ADMIN_TEMPLATE_ID',
-    CUSTOMER_CONFIRMATION: 'YOUR_CUSTOMER_TEMPLATE_ID'
+    // Admin notification template ID
+    // Example: 'template_admin123'
+    ADMIN_NOTIFICATION: 'template_npy1hav',
+    
+    // Customer confirmation template ID
+    // Example: 'template_customer456'
+    CUSTOMER_CONFIRMATION: 'template_1pyvh5w'
   }
 };
 
