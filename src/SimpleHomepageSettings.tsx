@@ -63,7 +63,10 @@ const SimpleHomepageSettings = () => {
         order_deadline_text: formData.order_deadline_text.trim(),
         delivery_info_text: formData.delivery_info_text.trim(),
         menu_title: formData.menu_title.trim(),
-        serviceable_pincodes: formData.serviceable_pincodes.trim()
+        serviceable_pincodes: formData.serviceable_pincodes.trim(),
+        about_title: 'About Ebby\'s Bakery',
+        about_content: 'We are passionate about creating fresh, artisanal sourdough bread and delicious treats. Our commitment to quality and traditional baking methods ensures every bite is a delight.',
+        about_image_url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2072&q=80'
       };
 
       console.log('Cleaned data:', cleanedData);
@@ -77,7 +80,7 @@ const SimpleHomepageSettings = () => {
       if (settings) {
         console.log('Updating existing settings with ID:', settings.id);
         // Update existing settings
-        const updatedSettings = await homepageSettingsService.update(settings.id, cleanedData);
+        const updatedSettings = await homepageSettingsService.update(cleanedData);
         console.log('Settings updated successfully:', updatedSettings);
       } else {
         console.log('Creating new settings');

@@ -397,7 +397,7 @@ const AdminDashboard = () => {
         hero_image_url: ''
       };
       
-      await homepageSettingsService.update(homepageSettings.id, updatedSettings);
+      await homepageSettingsService.update(updatedSettings);
       await fetchHomepageSettings();
       alert('Hero image removed successfully!');
     } catch (error) {
@@ -453,16 +453,19 @@ const AdminDashboard = () => {
       
       const settingsData = {
         brand_name: homepageSettingsFormData.brand_name.trim(),
-        hero_image_url: heroImageUrl,
+        hero_image_url: heroImageUrl || homepageSettingsFormData.hero_image_url,
         tagline: homepageSettingsFormData.tagline.trim(),
         order_deadline_text: homepageSettingsFormData.order_deadline_text.trim(),
         delivery_info_text: homepageSettingsFormData.delivery_info_text.trim(),
         menu_title: homepageSettingsFormData.menu_title.trim(),
-        serviceable_pincodes: homepageSettingsFormData.serviceable_pincodes.trim()
+        serviceable_pincodes: homepageSettingsFormData.serviceable_pincodes.trim(),
+        about_title: 'About Ebby\'s Bakery',
+        about_content: 'We are passionate about creating fresh, artisanal sourdough bread and delicious treats. Our commitment to quality and traditional baking methods ensures every bite is a delight.',
+        about_image_url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2072&q=80'
       };
       
       if (homepageSettings) {
-        await homepageSettingsService.update(homepageSettings.id, settingsData);
+        await homepageSettingsService.update(settingsData);
       } else {
         await homepageSettingsService.create(settingsData);
       }
@@ -511,7 +514,7 @@ const AdminDashboard = () => {
         hero_image_url: heroImageUrl
       };
 
-      await homepageSettingsService.update(homepageSettings.id, updatedSettings);
+      await homepageSettingsService.update(updatedSettings);
       setShowHeroImageUploadModal(false);
       setHeroImagePreview(null);
       await fetchHomepageSettings();

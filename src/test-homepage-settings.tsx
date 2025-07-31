@@ -33,14 +33,17 @@ const TestHomepageSettings = () => {
     
     try {
       setSaving(true);
-      await homepageSettingsService.update(settings.id, {
+      await homepageSettingsService.update({
         brand_name: settings.brand_name,
         hero_image_url: settings.hero_image_url,
         tagline: settings.tagline,
         order_deadline_text: settings.order_deadline_text,
         delivery_info_text: settings.delivery_info_text,
         menu_title: settings.menu_title ?? undefined,
-        serviceable_pincodes: settings.serviceable_pincodes
+        serviceable_pincodes: settings.serviceable_pincodes,
+        about_title: 'About Ebby\'s Bakery',
+        about_content: 'We are passionate about creating fresh, artisanal sourdough bread and delicious treats. Our commitment to quality and traditional baking methods ensures every bite is a delight.',
+        about_image_url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2072&q=80'
       });
       setMessage('Settings saved successfully');
       setMessageType('success');
@@ -140,7 +143,7 @@ const TestHomepageSettings = () => {
                 <label className="block text-sm font-medium text-gray-700">Serviceable Pincodes</label>
                 <input
                   type="text"
-                  value={settings.serviceable_pincodes}
+                  value={settings.serviceable_pincodes || ''}
                   onChange={(e) => setSettings({ ...settings, serviceable_pincodes: e.target.value })}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                 />

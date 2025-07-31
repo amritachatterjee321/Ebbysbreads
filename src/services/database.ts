@@ -19,7 +19,6 @@ type HomepageSettingsUpdate = Database['public']['Tables']['homepage_settings'][
 
 type ServiceablePincode = Database['public']['Tables']['serviceable_pincodes']['Row'];
 type ServiceablePincodeInsert = Database['public']['Tables']['serviceable_pincodes']['Insert'];
-type ServiceablePincodeUpdate = Database['public']['Tables']['serviceable_pincodes']['Update'];
 
 export const databaseService = {
   // Product operations
@@ -659,7 +658,7 @@ export const homepageSettingsService = {
     return databaseService.getHomepageSettings();
   },
 
-  async update(id: number, settings: HomepageSettingsUpdate): Promise<HomepageSettings> {
+  async update(settings: HomepageSettingsUpdate): Promise<HomepageSettings> {
     const { data, error } = await databaseService.updateHomepageSettings(settings);
     if (error) throw error;
     return data!;
