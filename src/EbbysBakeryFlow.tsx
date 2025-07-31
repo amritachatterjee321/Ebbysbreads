@@ -684,6 +684,17 @@ const Homepage = () => {
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-800 mb-4">{homepageSettings?.menuTitle || 'THIS WEEK\'S MENU'}</h2>
             </div>
+            
+            <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-blue-800 text-sm">
+                  <strong>Tip:</strong> You can add items to your cart now and check delivery availability on the checkout page.
+                </p>
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {isLoading ? (
                 // Loading skeleton
@@ -749,7 +760,7 @@ const Homepage = () => {
                           size="sm" 
                           onClick={() => updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) - 1)} 
                           className="rounded-full w-10 h-10 p-0 flex items-center justify-center text-orange-600 hover:bg-orange-50" 
-                          disabled={!pincodeValidation?.isServiceable || !cart.find(item => item.id === product.id) || (cart.find(item => item.id === product.id)?.quantity || 0) <= 0}
+                          disabled={!cart.find(item => item.id === product.id) || (cart.find(item => item.id === product.id)?.quantity || 0) <= 0}
                         >
                           <Minus className="h-5 w-5" />
                         </Button>
@@ -761,13 +772,13 @@ const Homepage = () => {
                           size="sm" 
                           onClick={() => updateQuantity(product.id, (cart.find(item => item.id === product.id)?.quantity || 0) + 1)} 
                           className="rounded-full w-10 h-10 p-0 flex items-center justify-center text-orange-600 hover:bg-orange-50"
-                          disabled={!pincodeValidation?.isServiceable || product.stock === 0}
+                          disabled={product.stock === 0}
                         >
                           <Plus className="h-5 w-5" />
                         </Button>
                       </div>
                     </div>
-                    {!pincodeValidation?.isServiceable && <p className="text-xs text-gray-500 text-center mt-2">Check delivery availability first</p>}
+
                     {product.stock === 0 && <p className="text-xs text-red-500 text-center mt-2">This item is currently out of stock</p>}
                   </CardContent>
                 </Card>
@@ -951,6 +962,21 @@ const Homepage = () => {
 
 const CheckoutPage = () => {
   const { cart, subtotal, deliveryCharges, total, setCurrentPage, updateCartQuantity, removeFromCart } = useAppContext();
+  const [pincode, setPincode] = useState('');
+  const [pincodeValidation, setPincodeValidation] = useState<PincodeValidationResult | null>(null);
+  const [showPincodeWarning, setShowPincodeWarning] = useState(false);
+
+  const handlePincodeValidationChange = useCallback((result: PincodeValidationResult) => {
+    setPincodeValidation(result);
+  }, []);
+
+  const handleProceedToAccount = () => {
+    if (!pincodeValidation?.isServiceable) {
+      setShowPincodeWarning(true);
+      return;
+    }
+    setCurrentPage('account');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-amber-50">
@@ -1001,6 +1027,45 @@ const CheckoutPage = () => {
           </div>
           <div className="space-y-6">
             <Card>
+              <CardHeader><CardTitle>Delivery Address</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="pincode" className="text-gray-700">Enter your delivery pincode</Label>
+                    <PincodeInput
+                      value={pincode}
+                      onChange={(value) => setPincode(value)}
+                      onValidationChange={handlePincodeValidationChange}
+                      placeholder="Enter your pincode"
+                      className="mt-2"
+                    />
+                  </div>
+                  {showPincodeWarning && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-red-700 text-sm">
+                        ⚠️ Please enter a valid pincode where we deliver before proceeding.
+                      </p>
+                    </div>
+                  )}
+                  {pincodeValidation && pincodeValidation.isValid && pincodeValidation.isServiceable && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-green-700 text-sm">
+                        ✅ Great! We deliver to your area.
+                      </p>
+                    </div>
+                  )}
+                  {pincodeValidation && pincodeValidation.isValid && !pincodeValidation.isServiceable && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-yellow-700 text-sm">
+                        ⚠️ Sorry, we don't deliver to this pincode yet.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
               <CardHeader><CardTitle>Order Total</CardTitle></CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -1009,7 +1074,14 @@ const CheckoutPage = () => {
                   {subtotal < 500 && <p className="text-xs text-gray-500">Free delivery on orders above ₹500</p>}
                   <div className="border-t pt-3"><div className="flex justify-between text-lg font-bold text-gray-800"><span>Total Amount</span><span>₹{total}</span></div><p className="text-xs text-gray-500 mt-1">To be paid on delivery</p></div>
                 </div>
-                <Button onClick={() => setCurrentPage('account')} className="w-full mt-6 bg-orange-600 hover:bg-orange-700" size="lg">Proceed to Account Details<ArrowRight className="h-4 w-4 ml-2" /></Button>
+                <Button 
+                  onClick={handleProceedToAccount} 
+                  disabled={!pincodeValidation?.isServiceable}
+                  className="w-full mt-6 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                  size="lg"
+                >
+                  Proceed to Account Details<ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
               </CardContent>
             </Card>
           </div>
