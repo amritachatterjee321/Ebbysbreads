@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { simpleEmailService } from './services/email-simple';
 import { EMAILJS_CONFIG, isEmailJSConfigured } from './config/emailjs';
 import { supabase } from './lib/supabase';
@@ -44,7 +44,7 @@ const TestEmailDebug: React.FC = () => {
       // Test EmailJS import
       addDebugInfo('🔍 Testing EmailJS Import...');
       try {
-        const emailjs = await import('@emailjs/browser');
+        await import('@emailjs/browser');
         addDebugInfo('✅ EmailJS imported successfully');
       } catch (error) {
         addDebugInfo(`❌ EmailJS import failed: ${error}`);
