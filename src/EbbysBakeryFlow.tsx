@@ -618,6 +618,14 @@ const Homepage = () => {
                     <span className="hidden sm:inline">Admin</span>
                   </Button>
                 </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-blue-300 text-blue-700 hover:bg-blue-50 px-2 sm:px-3"
+                  onClick={() => setCurrentPage('email-test')}
+                >
+                  📧 Test
+                </Button>
               </div>
             </div>
             {pincodeValidation && pincodeValidation.isValid && pincodeValidation.isServiceable && (

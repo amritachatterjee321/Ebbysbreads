@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { isTest, isStaging, log } from '../lib/environment';
+import { isTest, isStaging, isDevelopment, log } from '../lib/environment';
 import { supabase } from '../lib/supabase';
 import { useAppContext } from '../EbbysBakeryFlow';
 
@@ -8,8 +8,26 @@ const TestDataManager: React.FC = () => {
   const [message, setMessage] = useState('');
   const { setCurrentPage } = useAppContext();
 
-  // Only show in test or staging environments
-  if (!isTest() && !isStaging()) {
+  // Debug environment detection
+  console.log('TestDataManager: Environment check', {
+    isTest: isTest(),
+    isStaging: isStaging(),
+    isDevelopment: isDevelopment(),
+    VITE_ENV: import.meta.env.VITE_ENV,
+    MODE: import.meta.env.MODE,
+    DEV: import.meta.env.DEV,
+    PROD: import.meta.env.PROD
+  });
+
+  // Show in test, staging, or development environments
+  if (!isTest() && !isStaging() && !isDevelopment()) {
+    console.log('TestDataManager: Not showing - environment check failed', {
+      isTest: isTest(),
+      isStaging: isStaging(),
+      isDevelopment: isDevelopment(),
+      VITE_ENV: import.meta.env.VITE_ENV,
+      MODE: import.meta.env.MODE
+    });
     return null;
   }
 
