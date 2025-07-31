@@ -615,12 +615,12 @@ const AdminDashboard = () => {
             alt={product.name}
             className="w-16 h-16 object-cover rounded"
           />
-          <div>
+            <div>
             <h3 className="font-medium text-gray-900">{product.name}</h3>
             <p className="text-sm text-gray-500">₹{product.price}</p>
             <p className="text-xs text-gray-400">Sort Order: {product.sort_order || 0}</p>
+            </div>
           </div>
-        </div>
         <div className="flex items-center space-x-2">
           <span className={`px-2 py-1 text-xs rounded-full ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             {product.is_active ? 'Active' : 'Inactive'}
@@ -643,8 +643,8 @@ const AdminDashboard = () => {
           >
             Retry
           </button>
-        </div>
-      </div>
+            </div>
+          </div>
     );
   }
 
@@ -745,7 +745,7 @@ const AdminDashboard = () => {
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0 flex items-center">
                 <h1 className="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
-              </div>
+            </div>
               <button
                 onClick={goToHomepage}
                 className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center transition-colors duration-200"
@@ -755,9 +755,9 @@ const AdminDashboard = () => {
               </button>
             </div>
           </div>
+          </div>
         </div>
-      </div>
-      
+        
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow">
           <div className="border-b border-gray-200">
@@ -818,7 +818,7 @@ const AdminDashboard = () => {
                 Customer Accounts
               </button>
             </nav>
-          </div>
+            </div>
 
           <div className="p-6">
             {activeTab === 'overview' && <OverviewTab />}
@@ -848,8 +848,8 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
-                <div>
+        </div>
+                    <div>
                   <label className="block text-sm font-medium text-gray-700">Price (₹)</label>
                   <input
                     type="number"
@@ -858,8 +858,8 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
-                <div>
+                    </div>
+                    <div>
                   <label className="block text-sm font-medium text-gray-700">Weight</label>
                   <input
                     type="text"
@@ -868,7 +868,7 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
+                    </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Description</label>
                   <textarea
@@ -928,14 +928,14 @@ const AdminDashboard = () => {
                     {imagePreview ? (
                       <div className="relative">
                         <img src={(imagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
-                        <button
+                    <button
                           type="button"
                           onClick={removeImage}
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
+                    >
                           ✕
-                        </button>
-                      </div>
+                    </button>
+        </div>
                     ) : (
                       <div>
                         <input
@@ -948,9 +948,9 @@ const AdminDashboard = () => {
                         <label htmlFor="product-image" className="cursor-pointer text-blue-600 hover:underline">
                           Click to upload or drag and drop an image here
                         </label>
-                      </div>
+      </div>
                     )}
-                  </div>
+    </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <button
@@ -995,8 +995,8 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
-                <div>
+      </div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700">Tagline</label>
                   <textarea
                     value={homepageSettingsFormData.tagline ?? ''}
@@ -1005,8 +1005,8 @@ const AdminDashboard = () => {
                     rows={3}
                     required
                   />
-                </div>
-                <div>
+                  </div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700">Order Deadline Text</label>
                   <input
                     type="text"
@@ -1015,7 +1015,7 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
+                  </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Delivery Info Text</label>
                   <input
@@ -1025,7 +1025,7 @@ const AdminDashboard = () => {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                     required
                   />
-                </div>
+                  </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Menu Section Title</label>
                   <input
@@ -1058,14 +1058,14 @@ const AdminDashboard = () => {
                     {heroImagePreview ? (
                       <div className="relative">
                         <img src={(heroImagePreview ?? '') as string} alt="Preview" className="max-w-full h-auto" />
-                        <button
+                  <button
                           type="button"
                           onClick={removeHeroImage}
                           className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
+                  >
                           ✕
-                        </button>
-                      </div>
+                  </button>
+      </div>
                     ) : (
                       <div>
                         <input

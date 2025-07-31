@@ -266,14 +266,14 @@ export const databaseService = {
     const { data, error } = await supabase
       .from('homepage_settings')
       .select('*')
-      .single();
+      .limit(1);
 
     if (error) {
       console.error('Error fetching homepage settings:', error);
       return null;
     }
 
-    return data;
+    return data && data.length > 0 ? data[0] : null;
   },
 
   async updateHomepageSettings(updates: HomepageSettingsUpdate): Promise<{ data: HomepageSettings | null; error: any }> {
