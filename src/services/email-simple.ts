@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { EMAILJS_CONFIG, isEmailJSConfigured, getTemplateId } from '../config/emailjs';
 
 export interface EmailNotification {
   to: string;
@@ -119,42 +120,65 @@ export const simpleEmailService = {
     text: string;
   }): Promise<{ success: boolean; error?: string }> {
     try {
-      // For now, just log the email content since EmailJS isn't configured
-      console.log('Email would be sent with content:', {
-        to: emailData.to,
-        subject: emailData.subject,
-        html: emailData.html.substring(0, 200) + '...',
-        text: emailData.text.substring(0, 200) + '...'
-      });
+      // Check if EmailJS is configured
+      if (!isEmailJSConfigured()) {
+        console.log('EmailJS not configured - logging email content instead:', {
+          to: emailData.to,
+          subject: emailData.subject,
+          html: emailData.html.substring(0, 200) + '...',
+          text: emailData.text.substring(0, 200) + '...'
+        });
+        return { success: true, error: 'EmailJS not configured - check console for email content' };
+      }
 
-      // TODO: Configure EmailJS with your credentials
-      // Uncomment and configure the code below:
-      /*
+      // Import EmailJS
       const emailjs = await import('@emailjs/browser');
       
+      // Determine which template to use based on email content
+      const isAdminEmail = emailData.subject.includes('New Order Received');
+      const templateId = getTemplateId(isAdminEmail);
+      
+      // Prepare template parameters
+      const templateParams = {
+        to_email: emailData.to,
+        subject: emailData.subject,
+        message: emailData.html,
+        from_name: 'Ebby\'s Bakery',
+        // Add any additional parameters your templates need
+        order_number: emailData.subject.match(/Order #([A-Z0-9]+)/)?.[1] || 'N/A',
+        order_date: new Date().toLocaleDateString('en-IN'),
+        customer_name: 'Customer', // You can extract this from the email content
+        customer_phone: 'N/A',
+        customer_email: emailData.to,
+        customer_address: 'N/A',
+        customer_pincode: 'N/A',
+        order_items: 'Order items will be populated from template',
+        total_amount: 'N/A'
+      };
+
+      console.log('Sending email via EmailJS:', {
+        serviceId: EMAILJS_CONFIG.SERVICE_ID,
+        templateId: templateId,
+        to: emailData.to,
+        subject: emailData.subject
+      });
+
       const result = await emailjs.send(
-        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
-        'YOUR_TEMPLATE_ID', // Replace with your EmailJS template ID
-        {
-          to_email: emailData.to,
-          subject: emailData.subject,
-          message: emailData.html,
-          from_name: 'Ebby\'s Bakery',
-        },
-        'YOUR_PUBLIC_KEY' // Replace with your EmailJS public key
+        EMAILJS_CONFIG.SERVICE_ID,
+        templateId,
+        templateParams,
+        EMAILJS_CONFIG.PUBLIC_KEY
       );
 
       if (result.status === 200) {
+        console.log('Email sent successfully via EmailJS');
         return { success: true };
       } else {
+        console.error('EmailJS returned non-200 status:', result.status);
         return { success: false, error: 'Failed to send email' };
       }
-      */
-
-      // For now, return success to test the flow
-      console.log('Email notification logged successfully (not actually sent)');
-      return { success: true, error: 'EmailJS not configured - check console for email content' };
     } catch (error) {
+      console.error('Error sending email via EmailJS:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   },
