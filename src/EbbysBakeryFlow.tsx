@@ -17,19 +17,14 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminDashboard from './AdminDashboard';
-import TestSupabase from './test-supabase';
-import TestPincode from './test-pincode';
-import TestPincodeSimple from './test-pincode-simple';
-import TestEmailIntegration from './test-email-integration';
-import TestAdminEmail from './test-admin-email';
-import TestEmailDebug from './test-email-debug';
-import TestEmailDuplicateDebug from './test-email-duplicate-debug';
+
+
 import { productService, homepageSettingsService, orderService, customerService } from './services/database';
 import { simpleEmailService } from './services/email-simple';
 import { supabase } from './lib/supabase';
 import { PincodeInput } from './components/PincodeInput';
 import EnvironmentBanner from './components/EnvironmentBanner';
-import TestDataManager from './components/TestDataManager';
+
 import { PincodeValidationResult } from './services/pincode';
 
 // --- src/types/index.ts ---
@@ -626,30 +621,7 @@ const Homepage = () => {
                     <span className="hidden sm:inline">Admin</span>
                   </Button>
                 </Link>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-blue-300 text-blue-700 hover:bg-blue-50 px-2 sm:px-3"
-                  onClick={() => setCurrentPage('email-test')}
-                >
-                  📧 Test
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-red-300 text-red-700 hover:bg-red-50 px-2 sm:px-3"
-                  onClick={() => setCurrentPage('email-debug')}
-                >
-                  🐛 Debug
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-purple-300 text-purple-700 hover:bg-purple-50 px-2 sm:px-3"
-                  onClick={() => setCurrentPage('email-duplicate-debug')}
-                >
-                  🔄 Duplicate Test
-                </Button>
+
               </div>
             </div>
             {pincodeValidation && pincodeValidation.isValid && pincodeValidation.isServiceable && (
@@ -1361,14 +1333,10 @@ const PageRenderer = () => {
         case 'account': return <AccountPage />;
         case 'confirmation': return <ConfirmationPage />;
         case 'admin': return <AdminDashboard />;
-        case 'test': return <TestSupabase />;
-        case 'storage': return <TestSupabase />;
-        case 'pincode': return <TestPincode />;
-        case 'pincode-simple': return <TestPincodeSimple />;
-        case 'email-test': return <TestEmailIntegration />;
-        case 'admin-email-test': return <TestAdminEmail />;
-        case 'email-debug': return <TestEmailDebug />;
-        case 'email-duplicate-debug': return <TestEmailDuplicateDebug />;
+
+
+
+
         default: return <Homepage />;
     }
 };
@@ -1378,7 +1346,7 @@ export default function EbbysBakeryFlow() {
     <AppProvider>
       <EnvironmentBanner />
       <PageRenderer />
-      <TestDataManager />
+      
     </AppProvider>
   );
 }
