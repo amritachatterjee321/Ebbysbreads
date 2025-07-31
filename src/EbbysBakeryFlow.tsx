@@ -1261,20 +1261,6 @@ const AccountPage = () => {
                               {!errors.phone && values.phone.length > 0 && values.phone.length < 10 && (
                                 <p className="text-orange-600 text-xs mt-1">📱 Please enter a complete 10-digit phone number</p>
                               )}
-                              {/* Debug info - remove in production */}
-                              <div className="mt-1 text-xs text-gray-400">
-                                Debug: Phone length: {values.phone.length}, Existing: {existingCustomerFound.toString()}
-                              </div>
-                              <button 
-                                type="button"
-                                onClick={() => {
-                                  console.log('🔍 Test button clicked');
-                                  setValues(prev => ({ ...prev, phone: '9560487800' }));
-                                }}
-                                className="text-xs text-blue-600 underline"
-                              >
-                                Test: Set to 10 digits
-                              </button>
                             </div>
                         </div>
                         <div><Label htmlFor="email">Email Address *</Label><Input id="email" type="email" placeholder="your.email@example.com" value={values.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomerFieldChange('email', e.target.value)} className={errors.email ? 'border-red-500' : ''} />{errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}</div>
