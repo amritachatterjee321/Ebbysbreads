@@ -63,7 +63,7 @@
         </table>
         
         <div class="total">
-          <h3>💰 Total Amount: ₹{{total_amount}}</h3>
+          <h3>💰 Total Amount: {{total_amount}}</h3>
         </div>
       </div>
       
@@ -151,7 +151,7 @@
         </table>
         
         <div class="total">
-          <h3>💰 Total Amount: ₹{{total_amount}}</h3>
+          <h3>💰 Total Amount: {{total_amount}}</h3>
         </div>
       </div>
       
@@ -175,6 +175,22 @@
 </html>
 ```
 
+## Dynamic Variables Reference
+
+These are the exact variables being passed from the code:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{{order_number}}` | Order number (e.g., EB123456) | `EB123456` |
+| `{{order_date}}` | Order date in DD/MM/YYYY format | `31/07/2025` |
+| `{{customer_name}}` | Customer's full name | `John Doe` |
+| `{{customer_phone}}` | Customer's phone number | `9876543210` |
+| `{{customer_email}}` | Customer's email address | `john@example.com` |
+| `{{customer_address}}` | Customer's delivery address | `123 Main Street, City` |
+| `{{customer_pincode}}` | Customer's pincode | `110001` |
+| `{{order_items}}` | HTML table rows with order items | `<tr><td>Chocolate Cake</td>...</tr>` |
+| `{{total_amount}}` | Total order amount with ₹ symbol | `₹1100` |
+
 ## How to Create Templates in EmailJS
 
 1. **Go to EmailJS Dashboard**
@@ -197,4 +213,20 @@
 
 4. **Copy Template IDs**
    - After creating each template, copy the Template ID
-   - You'll need these for the configuration 
+   - Update `src/config/emailjs.ts` with these IDs
+
+## Important Notes
+
+- **All variables are now properly mapped** to the actual order data
+- **Order items are pre-formatted** as HTML table rows
+- **Total amount includes ₹ symbol** automatically
+- **Dates are formatted** in Indian format (DD/MM/YYYY)
+- **All customer details** will be populated from the actual order
+
+## Testing
+
+After updating your templates:
+1. Go to `http://localhost:5173/email-debug`
+2. Click "Test Email Flow"
+3. Check that all variables are populated correctly
+4. Place a real order to test the complete flow 
