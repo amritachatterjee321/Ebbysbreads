@@ -37,7 +37,8 @@ export const simpleEmailService = {
         to: adminEmail,
         subject: `New Order Received - ${orderData.orderNumber}`,
         html: emailContent.html,
-        text: emailContent.text
+        text: emailContent.text,
+        orderData: orderData
       });
 
       if (emailResult.success) {
@@ -75,7 +76,8 @@ export const simpleEmailService = {
         to: orderData.customerEmail,
         subject: `Order Confirmed - ${orderData.orderNumber} | Ebby's Bakery`,
         html: emailContent.html,
-        text: emailContent.text
+        text: emailContent.text,
+        orderData: orderData
       });
 
       if (emailResult.success) {
@@ -118,6 +120,7 @@ export const simpleEmailService = {
     subject: string;
     html: string;
     text: string;
+    orderData?: OrderEmailData;
   }): Promise<{ success: boolean; error?: string }> {
     try {
       // Check if EmailJS is configured
@@ -144,16 +147,23 @@ export const simpleEmailService = {
         subject: emailData.subject,
         message: emailData.html,
         from_name: 'Ebby\'s Bakery',
-        // Add any additional parameters your templates need
-        order_number: emailData.subject.match(/Order #([A-Z0-9]+)/)?.[1] || 'N/A',
-        order_date: new Date().toLocaleDateString('en-IN'),
-        customer_name: 'Customer', // You can extract this from the email content
-        customer_phone: 'N/A',
-        customer_email: emailData.to,
-        customer_address: 'N/A',
-        customer_pincode: 'N/A',
-        order_items: 'Order items will be populated from template',
-        total_amount: 'N/A'
+        // Use actual order data if available
+        order_number: emailData.orderData?.orderNumber || emailData.subject.match(/Order #([A-Z0-9]+)/)?.[1] || 'N/A',
+        order_date: emailData.orderData?.orderDate || new Date().toLocaleDateString('en-IN'),
+        customer_name: emailData.orderData?.customerName || 'Customer',
+        customer_phone: emailData.orderData?.customerPhone || 'N/A',
+        customer_email: emailData.orderData?.customerEmail || emailData.to,
+        customer_address: emailData.orderData?.customerAddress || 'N/A',
+        customer_pincode: emailData.orderData?.customerPincode || 'N/A',
+        order_items: emailData.orderData ? emailData.orderData.items.map(item => 
+          `<tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">₹${item.price}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">₹${item.price * item.quantity}</td>
+          </tr>`
+        ).join('') : 'Order items will be populated from template',
+        total_amount: emailData.orderData ? `₹${emailData.orderData.total}` : 'N/A'
       };
 
       console.log('Sending email via EmailJS:', {
