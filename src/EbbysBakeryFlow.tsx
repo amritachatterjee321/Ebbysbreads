@@ -1175,18 +1175,9 @@ const AccountPage = () => {
         console.log('❌ No existing customer found for phone:', phone);
         setExistingCustomerFound(false);
         
-        // Step 4: Clear form for new customer (keep phone number)
-        setValues(prev => ({
-          ...prev,
-          name: '',
-          email: '',
-          address: '',
-          pincode: '',
-          addressType: 'Home',
-          landmark: ''
-        }));
-        
-        console.log('✅ Form cleared for new customer');
+        // Don't clear existing form data - just keep what user has entered
+        // Only clear fields that would have been auto-filled from existing customer
+        console.log('✅ Keeping existing form data for new customer');
       }
     } catch (error) {
       console.error('❌ Error checking existing customer:', error);
@@ -1201,15 +1192,12 @@ const AccountPage = () => {
     
     // If phone number is being entered, only check for existing customer when exactly 10 digits
     if (field === 'phone') {
-      // Reset existing customer status when phone number changes
-      if (value.length !== 10) {
-        setExistingCustomerFound(false);
-        return; // Exit early, don't check for existing customer
-      }
-      
       // Only check for existing customer when exactly 10 digits are entered
       if (value.length === 10) {
         checkExistingCustomer(value);
+      } else if (value.length < 10) {
+        // Reset existing customer status only when phone number is incomplete
+        setExistingCustomerFound(false);
       }
     }
   };
