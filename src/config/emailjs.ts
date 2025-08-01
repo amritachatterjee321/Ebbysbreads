@@ -24,10 +24,13 @@ export const EMAILJS_CONFIG = {
 
 // Helper function to check if EmailJS is configured
 export const isEmailJSConfigured = (): boolean => {
-  return EMAILJS_CONFIG.SERVICE_ID !== 'service_des65sk' && 
-         EMAILJS_CONFIG.PUBLIC_KEY !== 'CHOpZWvCB0w7AqTnN' &&
-         EMAILJS_CONFIG.TEMPLATES.ADMIN_NOTIFICATION !== 'template_npy1hav' &&
-         EMAILJS_CONFIG.TEMPLATES.CUSTOMER_CONFIRMATION !== 'template_1pyvh5w';
+  // Check if configuration has actual values (not placeholder-like)
+  const hasValidServiceId = Boolean(EMAILJS_CONFIG.SERVICE_ID && EMAILJS_CONFIG.SERVICE_ID.startsWith('service_'));
+  const hasValidPublicKey = Boolean(EMAILJS_CONFIG.PUBLIC_KEY && EMAILJS_CONFIG.PUBLIC_KEY.length > 10);
+  const hasValidAdminTemplate = Boolean(EMAILJS_CONFIG.TEMPLATES.ADMIN_NOTIFICATION && EMAILJS_CONFIG.TEMPLATES.ADMIN_NOTIFICATION.startsWith('template_'));
+  const hasValidCustomerTemplate = Boolean(EMAILJS_CONFIG.TEMPLATES.CUSTOMER_CONFIRMATION && EMAILJS_CONFIG.TEMPLATES.CUSTOMER_CONFIRMATION.startsWith('template_'));
+  
+  return hasValidServiceId && hasValidPublicKey && hasValidAdminTemplate && hasValidCustomerTemplate;
 };
 
 // Helper function to get template ID based on email type
