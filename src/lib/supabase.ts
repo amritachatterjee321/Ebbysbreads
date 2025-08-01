@@ -1,10 +1,32 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Check for both VITE_ prefixed and standard environment variable names
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY || 'your-anon-key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Validate environment variables
+if (!supabaseUrl || supabaseUrl === 'https://your-project.supabase.co' || supabaseUrl === 'your_supabase_project_url') {
+  console.error('❌ VITE_SUPABASE_URL is not properly configured');
+  console.error('Please set VITE_SUPABASE_URL in your environment variables');
+}
+
+if (!supabaseAnonKey || supabaseAnonKey === 'your-anon-key' || supabaseAnonKey === 'your_supabase_anon_key') {
+  console.error('❌ VITE_SUPABASE_ANON_KEY is not properly configured');
+  console.error('Please set VITE_SUPABASE_ANON_KEY in your environment variables');
+}
+
+// Create Supabase client with validated credentials
+export const supabase = createClient(
+  supabaseUrl || 'https://your-project.supabase.co',
+  supabaseAnonKey || 'your-anon-key',
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
+  }
+);
 
 // Database types
 export interface Database {

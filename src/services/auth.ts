@@ -12,6 +12,19 @@ export const authService = {
   // Get current user
   async getCurrentUser(): Promise<User | null> {
     try {
+      // First check if we have a valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Error getting session:', sessionError);
+        return null;
+      }
+      
+      if (!session) {
+        console.log('No active session found');
+        return null;
+      }
+      
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
         console.error('Error getting current user:', error);
