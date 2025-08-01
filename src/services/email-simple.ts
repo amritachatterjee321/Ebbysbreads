@@ -174,12 +174,12 @@ export const simpleEmailService = {
         customer_address: emailData.orderData?.customerAddress || 'N/A',
         customer_pincode: emailData.orderData?.customerPincode || 'N/A',
         order_items: emailData.orderData ? emailData.orderData.items.map(item => 
-          `<div style="padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-            <div style="flex: 1; font-weight: 500;">${item.name}</div>
-            <div style="width: 60px; text-align: center;">${item.quantity}</div>
-            <div style="width: 80px; text-align: right;">₹${item.price}</div>
-            <div style="width: 100px; text-align: right; font-weight: bold;">₹${item.price * item.quantity}</div>
-          </div>`
+          `<tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 8px 12px; font-weight: 500; width: 50%;">${item.name}</td>
+            <td style="padding: 8px 12px; text-align: center; width: 15%;">${item.quantity}</td>
+            <td style="padding: 8px 12px; text-align: right; width: 15%;">₹${item.price}</td>
+            <td style="padding: 8px 12px; text-align: right; width: 20%; font-weight: bold;">₹${item.price * item.quantity}</td>
+          </tr>`
         ).join('') : 'Order items will be populated from template',
         total_amount: emailData.orderData ? `₹${emailData.orderData.total}` : 'N/A'
       };

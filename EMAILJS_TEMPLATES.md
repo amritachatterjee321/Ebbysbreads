@@ -1,5 +1,12 @@
 # EmailJS Templates Setup
 
+## ⚠️ CRITICAL: Use Triple Curly Braces for Order Items
+
+**The most important thing:** You MUST use `{{{order_items}}}` (triple curly braces) in your EmailJS templates, NOT `{{order_items}}` (double curly braces).
+
+- ❌ `{{order_items}}` - HTML will be escaped and shown as raw text
+- ✅ `{{{order_items}}}` - HTML will be rendered properly
+
 ## Template 1: Admin Order Notification
 
 **Template Name:** `Admin Order Notification`
@@ -49,13 +56,19 @@
       <div class="order-details">
         <h3>📋 Order Items</h3>
         <div class="items-list">
-          <div style="background: #f97316; color: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-            <div style="flex: 1;">Item</div>
-            <div style="width: 60px; text-align: center;">Qty</div>
-            <div style="width: 80px; text-align: right;">Price</div>
-            <div style="width: 100px; text-align: right;">Total</div>
-          </div>
-          {{{order_items}}}
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+            <thead>
+              <tr style="background: #f97316; color: white; font-weight: bold;">
+                <th style="padding: 10px 12px; text-align: left; width: 50%;">Item</th>
+                <th style="padding: 10px 12px; text-align: center; width: 15%;">Qty</th>
+                <th style="padding: 10px 12px; text-align: right; width: 15%;">Price</th>
+                <th style="padding: 10px 12px; text-align: right; width: 20%;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{{order_items}}}
+            </tbody>
+          </table>
         </div>
         
         <div class="total">
@@ -133,13 +146,19 @@
       <div class="order-details">
         <h3>📋 Your Order</h3>
         <div class="items-list">
-          <div style="background: #10b981; color: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-            <div style="flex: 1;">Item</div>
-            <div style="width: 60px; text-align: center;">Qty</div>
-            <div style="width: 80px; text-align: right;">Price</div>
-            <div style="width: 100px; text-align: right;">Total</div>
-          </div>
-          {{{order_items}}}
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+            <thead>
+              <tr style="background: #10b981; color: white; font-weight: bold;">
+                <th style="padding: 10px 12px; text-align: left; width: 50%;">Item</th>
+                <th style="padding: 10px 12px; text-align: center; width: 15%;">Qty</th>
+                <th style="padding: 10px 12px; text-align: right; width: 15%;">Price</th>
+                <th style="padding: 10px 12px; text-align: right; width: 20%;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{{order_items}}}
+            </tbody>
+          </table>
         </div>
         
         <div class="total">
@@ -167,9 +186,21 @@
 </html>
 ```
 
-## Dynamic Variables Reference
+## 🔧 **Step-by-Step Fix Instructions:**
 
-These are the exact variables being passed from the code:
+### **1. Go to EmailJS Dashboard**
+- Visit https://dashboard.emailjs.com/
+- Go to "Email Templates" tab
+
+### **2. Edit Your Templates**
+- Find your existing templates
+- **CRITICAL:** Replace `{{order_items}}` with `{{{order_items}}}` (add one more curly brace)
+- Save and publish the templates
+
+### **3. Alternative: Create New Templates**
+If editing doesn't work, create new templates with the HTML above.
+
+## **Dynamic Variables Reference**
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -180,57 +211,32 @@ These are the exact variables being passed from the code:
 | `{{customer_email}}` | Customer's email address | `john@example.com` |
 | `{{customer_address}}` | Customer's delivery address | `123 Main Street, City` |
 | `{{customer_pincode}}` | Customer's pincode | `110001` |
-| `{{{order_items}}}` | Formatted order items with flexbox layout (HTML not escaped) | `<div style="padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;"><div style="flex: 1; font-weight: 500;">Blueberry Muffin</div><div style="width: 60px; text-align: center;">1</div><div style="width: 80px; text-align: right;">₹60</div><div style="width: 100px; text-align: right; font-weight: bold;">₹60</div></div>` |
+| `{{{order_items}}}` | **CRITICAL: Use triple braces** - Formatted order items | `<div style="...">Blueberry Muffin - 1 x ₹60 = ₹60</div>` |
 | `{{total_amount}}` | Total order amount with ₹ symbol | `₹280` |
 
-## How to Create Templates in EmailJS
+## **Why Triple Curly Braces Matter:**
 
-1. **Go to EmailJS Dashboard**
-   - Visit https://dashboard.emailjs.com/
-   - Go to "Email Templates" tab
+- **`{{variable}}`** - EmailJS escapes HTML (shows raw code)
+- **`{{{variable}}}`** - EmailJS renders HTML (shows formatted content)
 
-2. **Create Admin Template**
-   - Click "Create New Template"
-   - Name: `Admin Order Notification`
-   - Subject: `New Order Received - {{order_number}}`
-   - Copy the HTML from Template 1 above
-   - Save and publish
-
-3. **Create Customer Template**
-   - Click "Create New Template"
-   - Name: `Customer Order Confirmation`
-   - Subject: `Order Confirmed - {{order_number}} | Ebby's Bakery`
-   - Copy the HTML from Template 2 above
-   - Save and publish
-
-4. **Copy Template IDs**
-   - After creating each template, copy the Template ID
-   - Update `src/config/emailjs.ts` with these IDs
-
-## Important Notes
-
-- **Order items use triple curly braces `{{{order_items}}}`** to prevent HTML escaping
-- **Order items use flexbox layout** for better alignment and compatibility
-- **Each item uses div elements with flex properties** for proper spacing
-- **All other variables remain the same** and will be populated correctly
-- **The flexbox layout ensures proper alignment** across different email clients
-
-## Testing
+## **Testing**
 
 After updating your templates:
 1. Go to `http://localhost:5173/`
-2. Place a real order to test the complete flow
-3. Check your email inbox for properly formatted emails
+2. Add multiple items to cart
+3. Place a real order
+4. Check your email inbox for properly formatted order items
 
-## Expected Order Items Format
+## **Expected Result**
 
-Your order items will now display as properly aligned content:
+Your order items should now display as:
 ```
 ┌─────────────────────┬─────┬─────────┬─────────┐
 │ Item                │ Qty │ Price   │ Total   │
 ├─────────────────────┼─────┼─────────┼─────────┤
 │ Blueberry Muffin    │  1  │   ₹60   │   ₹60   │
-│ Cinnamon Roll       │  1  │   ₹70   │   ₹70   │
-│ Multigrain Bread    │  1  │  ₹110   │  ₹110   │
+│ Whole Wheat Bread   │  1  │  ₹100   │  ₹100   │
 └─────────────────────┴─────┴─────────┴─────────┘
-``` 
+```
+
+**NOT as raw HTML code!** 
