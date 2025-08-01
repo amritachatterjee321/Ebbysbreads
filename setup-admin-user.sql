@@ -1,22 +1,42 @@
--- Setup Admin User for Email Notifications
--- Run this in your Supabase SQL Editor
+-- Setup Admin User in user_profiles table
+-- Replace 'your-email@example.com' with the actual admin email
 
--- Create user_profiles table if it doesn't exist
-CREATE TABLE IF NOT EXISTS user_profiles (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    role VARCHAR(50) DEFAULT 'user',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- Option 1: Insert new admin user (if user doesn't exist)
+INSERT INTO user_profiles (id, email, name, role, created_at, updated_at)
+VALUES (
+    gen_random_uuid(), -- Generate new UUID
+    'your-email@example.com', -- Replace with actual admin email
+    'Admin User', -- Admin name
+    'admin', -- Admin role
+    NOW(), -- Created timestamp
+    NOW() -- Updated timestamp
+)
+ON CONFLICT (email) DO NOTHING; -- Don't insert if email already exists
 
--- Insert admin user (replace 'your-email@example.com' with your actual email)
-INSERT INTO user_profiles (email, role) 
-VALUES ('your-email@example.com', 'admin')
-ON CONFLICT (email) 
-DO UPDATE SET 
+-- Option 2: Update existing user to admin role
+UPDATE user_profiles 
+SET 
     role = 'admin',
+    name = COALESCE(name, 'Admin User'),
+    updated_at = NOW()
+WHERE email = 'your-email@example.com'; -- Replace with actual admin email
+
+-- Option 3: Upsert admin user (insert if not exists, update if exists)
+INSERT INTO user_profiles (id, email, name, role, created_at, updated_at)
+VALUES (
+    gen_random_uuid(),
+    'your-email@example.com', -- Replace with actual admin email
+    'Admin User',
+    'admin',
+    NOW(),
+    NOW()
+)
+ON CONFLICT (email) DO UPDATE SET
+    role = 'admin',
+    name = COALESCE(user_profiles.name, 'Admin User'),
     updated_at = NOW();
 
--- Verify the admin user was created
-SELECT * FROM user_profiles WHERE role = 'admin'; 
+-- Verify admin user was created/updated
+SELECT id, email, name, role, created_at, updated_at
+FROM user_profiles 
+WHERE email = 'your-email@example.com'; -- Replace with actual admin email 

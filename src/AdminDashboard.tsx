@@ -20,7 +20,9 @@ import {
   Mail,
   MapPin,
   Calendar,
-  Search
+  Search,
+  Archive,
+  RotateCcw
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -84,6 +86,7 @@ const AdminDashboard = () => {
   const [showHomepageSettingsModal, setShowHomepageSettingsModal] = useState(false);
   const [showHeroImageUploadModal, setShowHeroImageUploadModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showArchivedOrders, setShowArchivedOrders] = useState(false);
   const [productFormData, setProductFormData] = useState<ProductFormData>({
     name: '',
     price: 0,
@@ -128,10 +131,14 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    fetchOrders();
+  }, [showArchivedOrders]);
+
   const fetchOrders = async () => {
     try {
-      const data = await orderService.getAll();
-      setOrders(data);
+      const ordersData = await orderService.getWithArchiveFilter(showArchivedOrders);
+      setOrders(ordersData);
     } catch (error) {
       console.error('Error fetching orders:', error);
     }
@@ -224,11 +231,33 @@ const AdminDashboard = () => {
   const updateOrderStatus = async (orderId: string, newStatus: Order['status']) => {
     try {
       await orderService.updateStatus(orderId, newStatus);
-      await fetchOrders();
+      fetchOrders();
     } catch (error) {
       console.error('Error updating order status:', error);
-      alert(`Failed to update order status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  };
+
+  const archiveOrder = async (orderId: string) => {
+    try {
+      await orderService.archive(orderId);
+      fetchOrders();
+    } catch (error) {
+      console.error('Error archiving order:', error);
+    }
+  };
+
+  const unarchiveOrder = async (orderId: string) => {
+    try {
+      await orderService.unarchive(orderId);
+      fetchOrders();
+    } catch (error) {
+      console.error('Error unarchiving order:', error);
+    }
+  };
+
+  const toggleArchiveFilter = async () => {
+    setShowArchivedOrders(!showArchivedOrders);
+    // fetchOrders will be called in useEffect when showArchivedOrders changes
   };
 
   const deleteProduct = async (productId: number) => {
@@ -1411,7 +1440,19 @@ const AdminDashboard = () => {
   function OrdersTab() {
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">Orders</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900">Orders</h2>
+          <button
+            onClick={toggleArchiveFilter}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
+              showArchivedOrders 
+                ? 'bg-gray-600 text-white hover:bg-gray-700' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {showArchivedOrders ? 'Show Active Orders' : 'Show Archived Orders'}
+          </button>
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -1427,9 +1468,14 @@ const AdminDashboard = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {orders.map((order) => (
-                <tr key={order.id}>
+                <tr key={order.id} className={order.is_archived ? 'bg-gray-50' : ''}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     #{order.order_number}
+                    {order.is_archived && (
+                      <span className="ml-2 px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded-full">
+                        Archived
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {order.customer_name}
@@ -1448,11 +1494,11 @@ const AdminDashboard = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(order.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-y-2">
                     <select
                       value={order.status}
                       onChange={(e) => updateOrderStatus(order.id, e.target.value as Order['status'])}
-                      className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                      className="border border-gray-300 rounded-md px-2 py-1 text-sm w-full"
                     >
                       <option value="pending">Pending</option>
                       <option value="confirmed">Confirmed</option>
@@ -1461,6 +1507,27 @@ const AdminDashboard = () => {
                       <option value="delivered">Delivered</option>
                       <option value="cancelled">Cancelled</option>
                     </select>
+                    <div className="flex space-x-1">
+                      {order.is_archived ? (
+                        <button
+                          onClick={() => unarchiveOrder(order.id)}
+                          className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 flex items-center"
+                          title="Unarchive Order"
+                        >
+                          <RotateCcw className="h-3 w-3 mr-1" />
+                          Unarchive
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => archiveOrder(order.id)}
+                          className="bg-gray-600 text-white px-2 py-1 rounded text-xs hover:bg-gray-700 flex items-center"
+                          title="Archive Order"
+                        >
+                          <Archive className="h-3 w-3 mr-1" />
+                          Archive
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -132,6 +132,26 @@ export const databaseService = {
     return data || [];
   },
 
+  async getOrdersWithArchiveFilter(includeArchived: boolean = false): Promise<Order[]> {
+    let query = supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!includeArchived) {
+      query = query.eq('is_archived', false);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching orders:', error);
+      return [];
+    }
+
+    return data || [];
+  },
+
   async getOrder(id: string): Promise<Order | null> {
     const { data, error } = await supabase
       .from('orders')
@@ -187,6 +207,36 @@ export const databaseService = {
     }
 
     return { error };
+  },
+
+  async archiveOrder(id: string): Promise<{ data: Order | null; error: any }> {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ is_archived: true, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error archiving order:', error);
+    }
+
+    return { data, error };
+  },
+
+  async unarchiveOrder(id: string): Promise<{ data: Order | null; error: any }> {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ is_archived: false, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error unarchiving order:', error);
+    }
+
+    return { data, error };
   },
 
   // Customer operations
@@ -531,6 +581,22 @@ export const orderService = {
     
     if (error) throw error;
     return data || [];
+  },
+
+  async getWithArchiveFilter(includeArchived: boolean = false): Promise<Order[]> {
+    return databaseService.getOrdersWithArchiveFilter(includeArchived);
+  },
+
+  async archive(id: string): Promise<Order> {
+    const { data, error } = await databaseService.archiveOrder(id);
+    if (error) throw error;
+    return data!;
+  },
+
+  async unarchive(id: string): Promise<Order> {
+    const { data, error } = await databaseService.unarchiveOrder(id);
+    if (error) throw error;
+    return data!;
   }
 };
 
