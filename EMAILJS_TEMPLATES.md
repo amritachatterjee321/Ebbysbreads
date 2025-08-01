@@ -49,11 +49,11 @@
       <div class="order-details">
         <h3>📋 Order Items</h3>
         <div class="items-list">
-          <div style="background: #f97316; color: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-weight: bold;">
-            <span style="display: inline-block; width: 50%;">Item</span>
-            <span style="display: inline-block; width: 15%; text-align: center;">Qty</span>
-            <span style="display: inline-block; width: 15%; text-align: right;">Price</span>
-            <span style="display: inline-block; width: 20%; text-align: right;">Total</span>
+          <div style="background: #f97316; color: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">Item</div>
+            <div style="width: 60px; text-align: center;">Qty</div>
+            <div style="width: 80px; text-align: right;">Price</div>
+            <div style="width: 100px; text-align: right;">Total</div>
           </div>
           {{{order_items}}}
         </div>
@@ -133,11 +133,11 @@
       <div class="order-details">
         <h3>📋 Your Order</h3>
         <div class="items-list">
-          <div style="background: #10b981; color: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-weight: bold;">
-            <span style="display: inline-block; width: 50%;">Item</span>
-            <span style="display: inline-block; width: 15%; text-align: center;">Qty</span>
-            <span style="display: inline-block; width: 15%; text-align: right;">Price</span>
-            <span style="display: inline-block; width: 20%; text-align: right;">Total</span>
+          <div style="background: #10b981; color: white; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">Item</div>
+            <div style="width: 60px; text-align: center;">Qty</div>
+            <div style="width: 80px; text-align: right;">Price</div>
+            <div style="width: 100px; text-align: right;">Total</div>
           </div>
           {{{order_items}}}
         </div>
@@ -180,7 +180,7 @@ These are the exact variables being passed from the code:
 | `{{customer_email}}` | Customer's email address | `john@example.com` |
 | `{{customer_address}}` | Customer's delivery address | `123 Main Street, City` |
 | `{{customer_pincode}}` | Customer's pincode | `110001` |
-| `{{{order_items}}}` | Formatted order items with inline styling (HTML not escaped) | `<div style="padding: 8px 0; border-bottom: 1px solid #eee;"><span style="display: inline-block; width: 50%;">Blueberry Muffin</span><span style="display: inline-block; width: 15%; text-align: center;">1</span><span style="display: inline-block; width: 15%; text-align: right;">₹60</span><span style="display: inline-block; width: 20%; text-align: right;">₹60</span></div>` |
+| `{{{order_items}}}` | Formatted order items with flexbox layout (HTML not escaped) | `<div style="padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;"><div style="flex: 1; font-weight: 500;">Blueberry Muffin</div><div style="width: 60px; text-align: center;">1</div><div style="width: 80px; text-align: right;">₹60</div><div style="width: 100px; text-align: right; font-weight: bold;">₹60</div></div>` |
 | `{{total_amount}}` | Total order amount with ₹ symbol | `₹280` |
 
 ## How to Create Templates in EmailJS
@@ -210,10 +210,10 @@ These are the exact variables being passed from the code:
 ## Important Notes
 
 - **Order items use triple curly braces `{{{order_items}}}`** to prevent HTML escaping
-- **Order items are formatted with inline styling** to avoid HTML escaping issues
-- **Each item uses div elements with inline-block spans** for proper alignment
+- **Order items use flexbox layout** for better alignment and compatibility
+- **Each item uses div elements with flex properties** for proper spacing
 - **All other variables remain the same** and will be populated correctly
-- **The styling ensures proper alignment** without relying on table structures
+- **The flexbox layout ensures proper alignment** across different email clients
 
 ## Testing
 
