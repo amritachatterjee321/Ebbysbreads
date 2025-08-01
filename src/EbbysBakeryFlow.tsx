@@ -327,6 +327,9 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       return false;
     }
     
+    // Set loading state immediately to prevent duplicate submissions
+    setIsLoading(true);
+    
     console.log('🔍 placeOrder called with customerData:', customerData);
     console.log('🔍 Cart items:', cart);
     console.log('🔍 Total amount:', total);
@@ -430,12 +433,19 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       setCurrentPage('confirmation');
       setCart([]);
       
+      // Reset loading state
+      setIsLoading(false);
+      
       return true;
     } catch (error) {
       console.error('Error creating order:', error);
       console.error('Error details:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       alert(`Failed to place order: ${errorMessage}. Please try again.`);
+      
+      // Reset loading state on error
+      setIsLoading(false);
+      
       return false;
     }
   };
@@ -1107,7 +1117,7 @@ const CheckoutPage = () => {
 // --- src/components/pages/AccountPage.tsx ---
 
 const AccountPage = () => {
-  const { total, setCurrentPage, placeOrder, customerInfo, serviceablePincodes, cart } = useAppContext();
+  const { total, setCurrentPage, placeOrder, customerInfo, serviceablePincodes, cart, isLoading } = useAppContext();
   const [existingCustomerFound, setExistingCustomerFound] = useState(false);
 
   const validationRules = (values: CustomerInfo): ValidationErrors => {
@@ -1291,7 +1301,15 @@ const AccountPage = () => {
                             </div>
                             <div><Label htmlFor="addressType">Address Type</Label><Select value={values.addressType} onValueChange={(value) => handleCustomerFieldChange('addressType', value)}><SelectItem value="Home">Home</SelectItem><SelectItem value="Office">Office</SelectItem><SelectItem value="Other">Other</SelectItem></Select></div>
                         </div>
-                        <Button onClick={handlePlaceOrder} className="w-full bg-orange-600 hover:bg-orange-700" size="lg">Place Order - ₹{total} (COD)<Check className="h-4 w-4 ml-2" /></Button>
+                        <Button 
+                          onClick={handlePlaceOrder} 
+                          disabled={isLoading}
+                          className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                          size="lg"
+                        >
+                          {isLoading ? 'Processing Order...' : `Place Order - ₹${total} (COD)`}
+                          {!isLoading && <Check className="h-4 w-4 ml-2" />}
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
