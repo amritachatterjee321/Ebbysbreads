@@ -55,7 +55,7 @@
             <span style="display: inline-block; width: 15%; text-align: right;">Price</span>
             <span style="display: inline-block; width: 20%; text-align: right;">Total</span>
           </div>
-          {{order_items}}
+          {{{order_items}}}
         </div>
         
         <div class="total">
@@ -139,7 +139,7 @@
             <span style="display: inline-block; width: 15%; text-align: right;">Price</span>
             <span style="display: inline-block; width: 20%; text-align: right;">Total</span>
           </div>
-          {{order_items}}
+          {{{order_items}}}
         </div>
         
         <div class="total">
@@ -180,7 +180,7 @@ These are the exact variables being passed from the code:
 | `{{customer_email}}` | Customer's email address | `john@example.com` |
 | `{{customer_address}}` | Customer's delivery address | `123 Main Street, City` |
 | `{{customer_pincode}}` | Customer's pincode | `110001` |
-| `{{order_items}}` | Formatted order items with inline styling | `<div style="padding: 8px 0; border-bottom: 1px solid #eee;"><span style="display: inline-block; width: 50%;">Blueberry Muffin</span><span style="display: inline-block; width: 15%; text-align: center;">1</span><span style="display: inline-block; width: 15%; text-align: right;">₹60</span><span style="display: inline-block; width: 20%; text-align: right;">₹60</span></div>` |
+| `{{{order_items}}}` | Formatted order items with inline styling (HTML not escaped) | `<div style="padding: 8px 0; border-bottom: 1px solid #eee;"><span style="display: inline-block; width: 50%;">Blueberry Muffin</span><span style="display: inline-block; width: 15%; text-align: center;">1</span><span style="display: inline-block; width: 15%; text-align: right;">₹60</span><span style="display: inline-block; width: 20%; text-align: right;">₹60</span></div>` |
 | `{{total_amount}}` | Total order amount with ₹ symbol | `₹280` |
 
 ## How to Create Templates in EmailJS
@@ -209,7 +209,8 @@ These are the exact variables being passed from the code:
 
 ## Important Notes
 
-- **Order items are now formatted with inline styling** to avoid HTML escaping issues
+- **Order items use triple curly braces `{{{order_items}}}`** to prevent HTML escaping
+- **Order items are formatted with inline styling** to avoid HTML escaping issues
 - **Each item uses div elements with inline-block spans** for proper alignment
 - **All other variables remain the same** and will be populated correctly
 - **The styling ensures proper alignment** without relying on table structures
