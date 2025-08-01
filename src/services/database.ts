@@ -583,6 +583,23 @@ export const orderService = {
     return data || [];
   },
 
+  async getByCustomerPhone(customerPhone: string, includeArchived: boolean = true): Promise<Order[]> {
+    let query = supabase
+      .from('orders')
+      .select('*')
+      .eq('customer_phone', customerPhone)
+      .order('created_at', { ascending: false });
+
+    if (!includeArchived) {
+      query = query.eq('is_archived', false);
+    }
+
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    return data || [];
+  },
+
   async getWithArchiveFilter(includeArchived: boolean = false): Promise<Order[]> {
     return databaseService.getOrdersWithArchiveFilter(includeArchived);
   },

@@ -591,7 +591,8 @@ const AdminDashboard = () => {
 
   const fetchCustomerOrders = async (customerPhone: string) => {
     try {
-      const customerOrders = orders.filter(order => order.customer_phone === customerPhone);
+      // Fetch all orders for this customer (including archived ones) from database
+      const customerOrders = await orderService.getByCustomerPhone(customerPhone, true);
       setCustomerOrders(customerOrders);
     } catch (error) {
       console.error('Error fetching customer orders:', error);
@@ -1785,14 +1786,21 @@ const AdminDashboard = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {customerOrders.map((order) => (
-                            <tr key={order.id} className="hover:bg-gray-50">
+                            <tr key={order.id} className={`hover:bg-gray-50 ${order.is_archived ? 'bg-gray-50' : ''}`}>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                <button
-                                  onClick={() => showOrderDetails(order)}
-                                  className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
-                                >
-                                  {order.order_number}
-                                </button>
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() => showOrderDetails(order)}
+                                    className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                                  >
+                                    {order.order_number}
+                                  </button>
+                                  {order.is_archived && (
+                                    <span className="px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded-full">
+                                      Archived
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {new Date(order.order_date).toLocaleDateString()}
