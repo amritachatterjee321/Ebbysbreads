@@ -1,0 +1,47 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#FDF6E3"/>
+  
+  <!-- Decorative bread pattern -->
+  <circle cx="200" cy="150" r="80" fill="#D4A574" opacity="0.3"/>
+  <circle cx="1000" cy="480" r="60" fill="#D4A574" opacity="0.3"/>
+  <circle cx="150" cy="500" r="40" fill="#D4A574" opacity="0.2"/>
+  <circle cx="1050" cy="120" r="50" fill="#D4A574" opacity="0.2"/>
+  
+  <!-- Main content area -->
+  <rect x="100" y="100" width="1000" height="430" rx="20" fill="white" stroke="#D4A574" stroke-width="3"/>
+  
+  <!-- Bakery icon -->
+  <g transform="translate(150, 200)">
+    <!-- Bread loaf -->
+    <ellipse cx="50" cy="30" rx="45" ry="25" fill="#8B4513"/>
+    <ellipse cx="50" cy="30" rx="40" ry="20" fill="#D4A574"/>
+    <!-- Bread texture lines -->
+    <line x1="20" y1="25" x2="80" y2="25" stroke="#8B4513" stroke-width="2" opacity="0.6"/>
+    <line x1="25" y1="35" x2="75" y2="35" stroke="#8B4513" stroke-width="2" opacity="0.6"/>
+    <line x1="30" y1="45" x2="70" y2="45" stroke="#8B4513" stroke-width="2" opacity="0.6"/>
+  </g>
+  
+  <!-- Text content -->
+  <text x="250" y="220" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#8B4513">Ebby's Bakery</text>
+  <text x="250" y="280" font-family="Arial, sans-serif" font-size="24" fill="#666">Fresh Sourdough Bread &amp; Artisan Pastries</text>
+  <text x="250" y="320" font-family="Arial, sans-serif" font-size="18" fill="#888">Made with love and traditional techniques</text>
+  
+  <!-- Decorative elements -->
+  <g transform="translate(900, 200)">
+    <!-- Wheat stalks -->
+    <line x1="0" y1="0" x2="0" y2="60" stroke="#8B4513" stroke-width="3"/>
+    <line x1="0" y1="10" x2="15" y2="20" stroke="#8B4513" stroke-width="2"/>
+    <line x1="0" y1="20" x2="-15" y2="30" stroke="#8B4513" stroke-width="2"/>
+    <line x1="0" y1="30" x2="15" y2="40" stroke="#8B4513" stroke-width="2"/>
+    <line x1="0" y1="40" x2="-15" y2="50" stroke="#8B4513" stroke-width="2"/>
+    <!-- Wheat grains -->
+    <circle cx="15" cy="20" r="3" fill="#D4A574"/>
+    <circle cx="-15" cy="30" r="3" fill="#D4A574"/>
+    <circle cx="15" cy="40" r="3" fill="#D4A574"/>
+    <circle cx="-15" cy="50" r="3" fill="#D4A574"/>
+  </g>
+  
+  <!-- Bottom accent -->
+  <rect x="100" y="480" width="1000" height="8" fill="#D4A574"/>
+</svg> 
