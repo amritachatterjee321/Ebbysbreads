@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Social Preview Generator</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: Arial, sans-serif;
+        }
+        .social-preview {
+            width: 1200px;
+            height: 630px;
+            background: linear-gradient(135deg, #FDF6E3 0%, #F5E6D3 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .main-content {
+            position: absolute;
+            top: 50px;
+            left: 100px;
+            right: 100px;
+            bottom: 50px;
+            background: white;
+            border-radius: 20px;
+            border: 2px solid #FF6B35;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .logo-section {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: #FF6B35;
+            border-radius: 8px;
+            position: relative;
+            margin-right: 20px;
+        }
+        .house-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+        }
+        .house-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 30px;
+            height: 20px;
+            background: white;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+        .house-icon::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 5px;
+            width: 20px;
+            height: 15px;
+            background: white;
+            border-radius: 2px;
+        }
+        .brand-name {
+            font-size: 52px;
+            font-weight: bold;
+        }
+        .brand-name .ebbys {
+            color: #333;
+        }
+        .brand-name .breads {
+            color: #FF6B35;
+        }
+        .taglines {
+            margin-bottom: 40px;
+        }
+        .tagline {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .features {
+            display: flex;
+            justify-content: space-between;
+            max-width: 600px;
+        }
+        .feature {
+            text-align: center;
+        }
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: #FF6B35;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            position: relative;
+        }
+        .feature-text {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+        .fresh-daily {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: #FF4444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            transform: rotate(5deg);
+        }
+        .website-url {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: white;
+            border: 2px solid #FF6B35;
+            color: #FF6B35;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .bread-decoration {
+            position: absolute;
+            opacity: 0.1;
+        }
+        .bread-1 {
+            top: 80px;
+            left: 50px;
+            width: 80px;
+            height: 50px;
+            background: #D4A574;
+            border-radius: 50%;
+        }
+        .bread-2 {
+            bottom: 80px;
+            right: 50px;
+            width: 120px;
+            height: 30px;
+            background: #D4A574;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="social-preview">
+        <div class="bread-decoration bread-1"></div>
+        <div class="bread-decoration bread-2"></div>
+        
+        <div class="main-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <div class="house-icon"></div>
+                </div>
+                <div class="brand-name">
+                    <span class="ebbys">Ebby's</span><br>
+                    <span class="breads">Breads</span>
+                </div>
+            </div>
+            
+            <div class="taglines">
+                <div class="tagline">Fresh sourdough bread and artisanal treats.</div>
+                <div class="tagline">New menu every week, delivered fresh to your door.</div>
+            </div>
+            
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon"></div>
+                    <div class="feature-text">Pincode Delivery</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon"></div>
+                    <div class="feature-text">Weekly Fresh Menu</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon"></div>
+                    <div class="feature-text">Cash on Delivery</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="fresh-daily">Fresh Daily!</div>
+        <div class="website-url">ebbysbreads.in</div>
+    </div>
+</body>
+</html> 
